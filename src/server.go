@@ -96,7 +96,7 @@ func (s Server) ReadStdin() {
 
 }
 
-func (s Server) HandleConnection(conn net.Conn) {
+func (s *Server) HandleConnection(conn net.Conn) {
 	s.Logger.Infof("Received a connection from %s\n", conn.RemoteAddr())
 
 	client := NewClient(conn)
