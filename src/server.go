@@ -1,32 +1,37 @@
 package src
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/golangminecraft/minecraft-server/src/logger"
 	"gopkg.in/yaml.v2"
 )
 
 type Server struct {
-	Logger   *logger.Logger
-	Config   *Configuration
-	Cwd      string
-	Listener net.Listener
-	Clients  []*Client
+	IsRunning bool
+	Logger    *logger.Logger
+	Config    *Configuration
+	Cwd       string
+	Listener  net.Listener
+	Clients   map[string]*Client
 }
 
 func NewServer() *Server {
 	return &Server{
-		Logger:   logger.NewLogger(1),
-		Config:   &Configuration{},
-		Cwd:      "",
-		Listener: nil,
-		Clients:  make([]*Client, 0),
+		IsRunning: false,
+		Logger:    logger.NewLogger(1),
+		Config:    &Configuration{},
+		Cwd:       "",
+		Listener:  nil,
+		Clients:   make(map[string]*Client),
 	}
 }
 
@@ -64,7 +69,9 @@ func (s *Server) Init() error {
 	return nil
 }
 
-func (s Server) Start() error {
+func (s *Server) Start() error {
+	s.IsRunning = true
+
 	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", s.Config.Host, s.Config.Port))
 
 	if err != nil {
@@ -79,7 +86,7 @@ func (s Server) Start() error {
 
 	go s.ReadStdin()
 
-	for {
+	for s.IsRunning {
 		conn, err := l.Accept()
 
 		if err != nil {
@@ -90,21 +97,57 @@ func (s Server) Start() error {
 
 		go s.HandleConnection(conn)
 	}
+
+	return nil
 }
 
-func (s Server) ReadStdin() {
+func (s *Server) ReadStdin() {
+	buf := bufio.NewReader(os.Stdin)
 
+	for s.IsRunning {
+		data, err := buf.ReadBytes(0x0A)
+
+		if err != nil {
+			panic(err)
+		}
+
+		args := strings.Split(strings.Trim(string(data[:len(data)-1]), " "), " ")
+
+		if len(args) < 1 {
+			continue
+		}
+
+		switch args[0] {
+		case "stop":
+			{
+				s.Logger.Info("Stopping the server...")
+
+				s.IsRunning = false
+
+				if err = s.Close(); err != nil {
+					panic(err)
+				}
+
+				break
+			}
+		}
+	}
 }
 
 func (s *Server) HandleConnection(conn net.Conn) {
 	s.Logger.Infof("Received a connection from %s\n", conn.RemoteAddr())
 
-	client := NewClient(conn)
-	s.Clients = append(s.Clients, client)
+	client := NewClient(s, conn)
+
+	s.Clients[client.UUID] = client
 
 	if err := client.Process(); err != nil {
-		s.Logger.Errorf("Failed to process packet from client %s: %v\n", conn.RemoteAddr(), err)
+		if !errors.Is(err, io.EOF) {
+			s.Logger.Errorf("Failed to process packet from client %s: %v\n", conn.RemoteAddr(), err)
+		}
 	}
+
+	delete(s.Clients, client.UUID)
 
 	conn.Close()
 }

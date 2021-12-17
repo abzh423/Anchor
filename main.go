@@ -45,5 +45,7 @@ func main() {
 		os.Exit(0)
 	})()
 
-	panic(server.Start())
+	if err := server.Start(); err != nil {
+		panic(err)
+	}
 }
