@@ -6,7 +6,6 @@
         <a href="https://github.com/GoLangMinecraft/Minecraft-Server/issues/new">Report an Issue</a> &bullet; <a href="https://github.com/GoLangMinecraft/Minecraft-Server/compare">Open a Pull Request</a> &bullet; <a href="https://discord.gg/8G5hDECBWk">Discord Server</a>
     </p>
 </p>
-<hr/>
 
 ## About
 
