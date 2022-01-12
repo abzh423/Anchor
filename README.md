@@ -22,6 +22,10 @@ This project was started to better understand the interaction between the server
 - [ ] Dropped entity interaction
 - [ ] NPCs (animals, mobs, etc.)
 - [ ] Plugins
+- [ ] Console input
+- [ ] Chat
+- [ ] Crafting
+- [ ] ... and so many utility APIs
 
 ## Installation
 
