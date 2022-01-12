@@ -1,163 +1,197 @@
-package src
+package main
 
 import (
-	"bufio"
+	"crypto/rand"
+	"crypto/rsa"
+	"encoding/hex"
 	"errors"
-	"fmt"
 	"io"
-	"io/ioutil"
-	"net"
+	"log"
 	"os"
 	"path"
-	"strings"
 
-	"github.com/golangminecraft/minecraft-server/src/logger"
-	"gopkg.in/yaml.v2"
+	"github.com/golangminecraft/minecraft-server/src/api/game/world"
+	"github.com/golangminecraft/minecraft-server/src/api/server"
+	"github.com/golangminecraft/minecraft-server/src/game"
+	"github.com/golangminecraft/minecraft-server/src/game/generators"
+	"github.com/golangminecraft/minecraft-server/src/networking"
+	"github.com/golangminecraft/minecraft-server/src/protocol/handlers"
+	"github.com/golangminecraft/minecraft-server/src/types"
 )
 
 type Server struct {
-	IsRunning bool
-	Logger    *logger.Logger
-	Config    *Configuration
-	Cwd       string
-	Listener  net.Listener
-	Clients   map[string]*Client
+	id             string
+	cwd            string
+	isRunning      bool
+	config         *types.Configuration
+	clients        map[string]server.Client
+	socket         server.Socket
+	packetHandlers []server.PacketHandler
+	privateKey     *rsa.PrivateKey
+	worldManager   world.WorldManager
 }
 
-func NewServer() *Server {
+func NewServer(cwd string) *Server {
+	privateKey, err := rsa.GenerateKey(rand.Reader, 1024)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	id := make([]byte, 10)
+
+	if _, err := rand.Read(id); err != nil {
+		log.Fatal(err)
+	}
+
 	return &Server{
-		IsRunning: false,
-		Logger:    logger.NewLogger(1),
-		Config:    &Configuration{},
-		Cwd:       "",
-		Listener:  nil,
-		Clients:   make(map[string]*Client),
+		id:             hex.EncodeToString(id),
+		cwd:            cwd,
+		isRunning:      false,
+		config:         types.NewConfiguration(),
+		clients:        make(map[string]server.Client),
+		socket:         networking.NewSocket(),
+		packetHandlers: make([]server.PacketHandler, 0),
+		privateKey:     privateKey,
+		worldManager:   game.NewWorldManager(),
 	}
 }
 
-func (s *Server) Init() error {
-	cwd, err := os.Getwd()
-
-	if err != nil {
-		panic(err)
+func (s *Server) Initialize() error {
+	if err := s.config.ReadFromFile(path.Join(s.cwd, "config.yml")); err != nil {
+		log.Println(err)
 	}
 
-	s.Cwd = cwd
-
-	s.Config.LoadDefaults()
-
-	data, err := ioutil.ReadFile(path.Join(cwd, "config.yml"))
-
-	if err != nil {
-		if !errors.Is(err, os.ErrNotExist) {
-			return err
-		}
-	} else if err = yaml.Unmarshal(data, s.Config); err != nil {
-		return err
+	if err := s.config.WriteToFile(path.Join(s.cwd, "config.yml")); err != nil {
+		log.Fatal(err)
 	}
 
-	data, err = yaml.Marshal(s.Config)
-
-	if err != nil {
-		return err
+	if err := os.Mkdir(path.Join(s.cwd, "worlds"), 0666); err != nil && !errors.Is(err, os.ErrExist) {
+		log.Fatal(err)
 	}
 
-	if err = ioutil.WriteFile(path.Join(cwd, "config.yml"), data, 0660); err != nil {
-		return err
+	if err := os.Mkdir(path.Join(s.cwd, "logs"), 0666); err != nil && !errors.Is(err, os.ErrExist) {
+		log.Fatal(err)
 	}
+
+	{
+		generator := generators.NewFlatWorldGenerator(s.config.Seed)
+		world := game.NewWorld("world", generator)
+		s.worldManager.NewWorld(world)
+
+		/* for x := int64(-3); x < 3; x++ {
+			for z := int64(-3); z < 3; z++ {
+				world.GenerateChunk(x, z)
+
+				log.Printf("Generated chunk %d:%d for world %s\n", x, z, world.Name())
+			}
+		} */
+	}
+
+	s.packetHandlers = append(s.packetHandlers, handlers.HandshakeHandler{})
+	s.packetHandlers = append(s.packetHandlers, handlers.PingHandler{})
+	s.packetHandlers = append(s.packetHandlers, handlers.LoginStartHandler{})
+	s.packetHandlers = append(s.packetHandlers, handlers.EncryptionResponseHandler{})
+	s.packetHandlers = append(s.packetHandlers, handlers.ClientSettingsHandler{})
+	s.packetHandlers = append(s.packetHandlers, handlers.RequestHandler{})
 
 	return nil
 }
 
 func (s *Server) Start() error {
-	s.IsRunning = true
-
-	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", s.Config.Host, s.Config.Port))
-
-	if err != nil {
+	if err := s.socket.Start(s.config.Host, s.config.Port); err != nil {
 		return err
 	}
 
-	defer l.Close()
+	log.Printf("Server started on %s:%d\n", s.config.Host, s.config.Port)
 
-	s.Listener = l
+	s.isRunning = true
 
-	s.Logger.Infof("Listening on %s:%d\n", s.Config.Host, s.Config.Port)
+	go (func() {
+		for s.isRunning {
+			client, err := s.socket.OnConnection()
 
-	go s.ReadStdin()
+			if err != nil {
+				log.Println(err)
 
-	for s.IsRunning {
-		conn, err := l.Accept()
+				continue
+			}
 
-		if err != nil {
-			s.Logger.Error("Failed to accept connection:", err)
+			go (func() {
+				if err := client.HandlePackets(s); err != nil {
+					if !errors.Is(err, io.EOF) {
+						log.Println(err)
+					}
 
-			continue
+					delete(s.clients, client.ID())
+				}
+			})()
+
+			s.clients[client.ID()] = client
 		}
-
-		go s.HandleConnection(conn)
-	}
+	})()
 
 	return nil
 }
 
-func (s *Server) ReadStdin() {
-	buf := bufio.NewReader(os.Stdin)
-
-	for s.IsRunning {
-		data, err := buf.ReadBytes(0x0A)
-
-		if err != nil {
-			panic(err)
-		}
-
-		args := strings.Split(strings.Trim(string(data[:len(data)-1]), " "), " ")
-
-		if len(args) < 1 {
-			continue
-		}
-
-		switch args[0] {
-		case "stop":
-			{
-				s.Logger.Info("Stopping the server...")
-
-				s.IsRunning = false
-
-				if err = s.Close(); err != nil {
-					panic(err)
-				}
-
-				break
-			}
-		}
-	}
+func (s Server) GetPacketHandlers() []server.PacketHandler {
+	return s.packetHandlers
 }
 
-func (s *Server) HandleConnection(conn net.Conn) {
-	s.Logger.Infof("Received a connection from %s\n", conn.RemoteAddr())
+func (s *Server) Stop() error {
+	s.isRunning = false
 
-	client := NewClient(s, conn)
+	if err := s.socket.Stop(); err != nil {
+		return err
+	}
 
-	s.Clients[client.UUID] = client
+	log.Println("Socket server gracefully closed")
 
-	if err := client.Process(); err != nil {
-		if !errors.Is(err, io.EOF) {
-			s.Logger.Errorf("Failed to process packet from client %s: %v\n", conn.RemoteAddr(), err)
+	return nil
+}
+
+func (s Server) GetCwd() string {
+	return s.cwd
+}
+
+func (s Server) IsRunning() bool {
+	return s.isRunning
+}
+
+func (s Server) GetClients() map[string]server.Client {
+	return s.clients
+}
+
+func (s Server) GetSocket() server.Socket {
+	return s.socket
+}
+
+func (s Server) OnlinePlayers() int {
+	online := 0
+
+	for _, v := range s.clients {
+		if v.GetPlayer() != nil {
+			online++
 		}
 	}
 
-	delete(s.Clients, client.UUID)
-
-	conn.Close()
+	return online
 }
 
-func (s Server) Close() error {
-	for _, v := range s.Clients {
-		if err := v.Close(); err != nil {
-			return err
-		}
-	}
-
-	return s.Listener.Close()
+func (s Server) GetConfig() *types.Configuration {
+	return s.config
 }
+
+func (s Server) GetPrivateKey() *rsa.PrivateKey {
+	return s.privateKey
+}
+
+func (s Server) ID() string {
+	return s.id
+}
+
+func (s Server) GetWorldManager() world.WorldManager {
+	return s.worldManager
+}
+
+var _ server.Server = &Server{}

@@ -5,8 +5,8 @@ import (
 	"io"
 )
 
-func ReadVarInt(r io.Reader) (int32, int, error) {
-	var numRead int = 0
+func ReadVarInt(r io.Reader) (int32, int64, error) {
+	var numRead int64 = 0
 	var result int32 = 0
 
 	for {
@@ -39,8 +39,8 @@ func ReadVarInt(r io.Reader) (int32, int, error) {
 	return result, numRead, nil
 }
 
-func WriteVarInt(value int32, w io.Writer) error {
-	var numWritten int = 0
+func WriteVarInt(value int32, w io.Writer) (int64, error) {
+	var numWritten int64 = 0
 
 	for {
 		if (uint32(value) & 0xFFFFFF80) == 0 {
@@ -48,13 +48,25 @@ func WriteVarInt(value int32, w io.Writer) error {
 
 			numWritten++
 
-			return err
+			return numWritten, err
 		}
 
 		_, err := w.Write([]byte{byte(value&0x7F | 0x80)})
 
 		if err != nil {
-			return err
+			return numWritten, err
+		}
+
+		value = int32(uint32(value) >> 7)
+	}
+}
+
+func VarIntLength(value int32) int64 {
+	var numWritten int64 = 0
+
+	for {
+		if (uint32(value) & 0xFFFFFF80) == 0 {
+			return numWritten
 		}
 
 		value = int32(uint32(value) >> 7)
