@@ -13,9 +13,12 @@ This project was started to better understand the interaction between the server
 
 ## Features
 
-- [x] Server Status
+- [x] Server status
+    - [x] Favicon
 - [x] Login
+- [x] Authentication
 - [x] Two-way encryption
+- [x] Query
 - [ ] World generation (work-in-progress)
 - [ ] Physics
 - [ ] Update blocks
@@ -23,6 +26,7 @@ This project was started to better understand the interaction between the server
 - [ ] NPCs (animals, mobs, etc.)
 - [ ] Plugins
 - [ ] Console input
+- [ ] RCON
 - [ ] Chat
 - [ ] Crafting
 - [ ] ... and so many utility APIs

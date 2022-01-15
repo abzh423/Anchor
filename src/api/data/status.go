@@ -1,9 +1,11 @@
 package data
 
+import "github.com/golangminecraft/minecraft-server/src/api/protocol"
+
 type StatusResponse struct {
 	Version     StatusResponseVersion `json:"version"`
 	Players     StatusResponsePlayers `json:"players"`
-	Description Chat                  `json:"description"`
+	Description protocol.Chat         `json:"description"`
 	Favicon     *string               `json:"favicon,omitempty"`
 }
 

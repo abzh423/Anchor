@@ -1,59 +1,52 @@
 package main
 
 import (
-	"crypto/rand"
-	"crypto/rsa"
-	"encoding/hex"
+	"bytes"
+	"encoding/base64"
 	"errors"
-	"io"
+	"fmt"
+	"image"
+	"image/png"
+	"io/ioutil"
 	"log"
 	"os"
 	"path"
+	"strings"
+	"time"
 
-	"github.com/golangminecraft/minecraft-server/src/api/game/world"
-	"github.com/golangminecraft/minecraft-server/src/api/server"
-	"github.com/golangminecraft/minecraft-server/src/game"
-	"github.com/golangminecraft/minecraft-server/src/game/generators"
-	"github.com/golangminecraft/minecraft-server/src/networking"
-	"github.com/golangminecraft/minecraft-server/src/protocol/handlers"
-	"github.com/golangminecraft/minecraft-server/src/types"
+	"github.com/golangminecraft/minecraft-server/src/api"
+	"github.com/golangminecraft/minecraft-server/src/api/data"
+	"github.com/golangminecraft/minecraft-server/src/api/enum"
+	proto "github.com/golangminecraft/minecraft-server/src/api/protocol"
+	"github.com/golangminecraft/minecraft-server/src/components"
+	"github.com/golangminecraft/minecraft-server/src/handlers"
+	"github.com/golangminecraft/minecraft-server/src/net"
+	"github.com/golangminecraft/minecraft-server/src/query"
 )
 
 type Server struct {
-	id             string
-	cwd            string
-	isRunning      bool
-	config         *types.Configuration
-	clients        map[string]server.Client
-	socket         server.Socket
-	packetHandlers []server.PacketHandler
-	privateKey     *rsa.PrivateKey
-	worldManager   world.WorldManager
+	isRunning   bool
+	config      api.Configuration
+	cwd         string
+	socket      api.Socket
+	clients     map[string]api.Client
+	worlds      map[string]api.World
+	favicon     *image.Image
+	entityID    int64
+	queryServer api.QueryServer
 }
 
-func NewServer(cwd string) *Server {
-	privateKey, err := rsa.GenerateKey(rand.Reader, 1024)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	id := make([]byte, 10)
-
-	if _, err := rand.Read(id); err != nil {
-		log.Fatal(err)
-	}
-
+func NewServer(cwd string) api.Server {
 	return &Server{
-		id:             hex.EncodeToString(id),
-		cwd:            cwd,
-		isRunning:      false,
-		config:         types.NewConfiguration(),
-		clients:        make(map[string]server.Client),
-		socket:         networking.NewSocket(),
-		packetHandlers: make([]server.PacketHandler, 0),
-		privateKey:     privateKey,
-		worldManager:   game.NewWorldManager(),
+		isRunning:   false,
+		config:      api.NewConfiguration(),
+		cwd:         cwd,
+		socket:      net.NewSocket(),
+		clients:     make(map[string]api.Client),
+		worlds:      make(map[string]api.World),
+		favicon:     nil,
+		entityID:    0,
+		queryServer: query.NewServer(),
 	}
 }
 
@@ -66,6 +59,14 @@ func (s *Server) Initialize() error {
 		log.Fatal(err)
 	}
 
+	if err := s.config.Validate(); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := s.queryServer.Initialize(s); err != nil {
+		return err
+	}
+
 	if err := os.Mkdir(path.Join(s.cwd, "worlds"), 0666); err != nil && !errors.Is(err, os.ErrExist) {
 		log.Fatal(err)
 	}
@@ -74,26 +75,24 @@ func (s *Server) Initialize() error {
 		log.Fatal(err)
 	}
 
-	{
-		generator := generators.NewFlatWorldGenerator(s.config.Seed)
-		world := game.NewWorld("world", generator)
-		s.worldManager.NewWorld(world)
+	if data, err := ioutil.ReadFile(path.Join(s.cwd, "favicon.png")); err == nil {
+		img, err := png.Decode(bytes.NewReader(data))
 
-		/* for x := int64(-3); x < 3; x++ {
-			for z := int64(-3); z < 3; z++ {
-				world.GenerateChunk(x, z)
+		if err != nil {
+			return err
+		}
 
-				log.Printf("Generated chunk %d:%d for world %s\n", x, z, world.Name())
-			}
-		} */
+		s.favicon = &img
 	}
 
-	s.packetHandlers = append(s.packetHandlers, handlers.HandshakeHandler{})
-	s.packetHandlers = append(s.packetHandlers, handlers.PingHandler{})
-	s.packetHandlers = append(s.packetHandlers, handlers.LoginStartHandler{})
-	s.packetHandlers = append(s.packetHandlers, handlers.EncryptionResponseHandler{})
-	s.packetHandlers = append(s.packetHandlers, handlers.ClientSettingsHandler{})
-	s.packetHandlers = append(s.packetHandlers, handlers.RequestHandler{})
+	for _, component := range components.Components {
+		if err := component.Initialize(s); err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	log.Printf("Initialized %d components\n", len(components.Components))
+	log.Printf("Loaded %d packet handlers\n", len(handlers.Handlers))
 
 	return nil
 }
@@ -103,95 +102,258 @@ func (s *Server) Start() error {
 		return err
 	}
 
-	log.Printf("Server started on %s:%d\n", s.config.Host, s.config.Port)
+	for _, component := range components.Components {
+		if err := component.Start(); err != nil {
+			log.Fatal(err)
+		}
+	}
 
 	s.isRunning = true
 
-	go (func() {
-		for s.isRunning {
-			client, err := s.socket.OnConnection()
-
-			if err != nil {
-				log.Println(err)
-
-				continue
-			}
-
-			go (func() {
-				if err := client.HandlePackets(s); err != nil {
-					if !errors.Is(err, io.EOF) {
-						log.Println(err)
-					}
-
-					delete(s.clients, client.ID())
-				}
-			})()
-
-			s.clients[client.ID()] = client
+	if s.config.EnableQuery {
+		if err := s.queryServer.Start(s.config.QueryHost, s.config.QueryPort); err != nil {
+			return err
 		}
-	})()
 
-	return nil
-}
-
-func (s Server) GetPacketHandlers() []server.PacketHandler {
-	return s.packetHandlers
-}
-
-func (s *Server) Stop() error {
-	s.isRunning = false
-
-	if err := s.socket.Stop(); err != nil {
-		return err
+		log.Printf("Query server running on %s:%d\n", s.config.QueryHost, s.config.QueryPort)
 	}
 
-	log.Println("Socket server gracefully closed")
+	log.Printf("Server running on %s:%d\n", s.config.Host, s.config.Port)
+
+	go s.AcceptConnections()
 
 	return nil
 }
 
-func (s Server) GetCwd() string {
-	return s.cwd
+func (s *Server) Close() error {
+	s.isRunning = false
+
+	for _, client := range s.clients {
+		// TODO properly send shutdown message to players
+
+		if err := client.Close(); err != nil {
+			log.Println(err)
+		}
+	}
+
+	if s.config.EnableQuery {
+		if err := s.queryServer.Close(); err != nil {
+			return err
+		}
+
+		log.Println("Closed query server")
+	}
+
+	return s.socket.Close()
 }
 
-func (s Server) IsRunning() bool {
-	return s.isRunning
+func (s *Server) AcceptConnections() {
+	for s.isRunning {
+		client, err := s.socket.AcceptConnection()
+
+		if err != nil {
+			log.Println(err)
+
+			continue
+		}
+
+		log.Printf("Received a connection from %s\n", client.RemoteAddr())
+
+		s.AddClient(client)
+
+		go (func() {
+			if err := client.HandleConnection(s); err != nil {
+				log.Println(err)
+
+				if err = client.Close(); err != nil {
+					log.Println(err)
+				}
+			}
+
+			s.RemoveClient(client)
+		})()
+	}
 }
 
-func (s Server) GetClients() map[string]server.Client {
-	return s.clients
+func (s *Server) AddClient(client api.Client) {
+	s.clients[client.ID()] = client
 }
 
-func (s Server) GetSocket() server.Socket {
+func (s *Server) RemoveClient(client api.Client) {
+	delete(s.clients, client.ID())
+}
+
+func (s Server) GetSocket() api.Socket {
 	return s.socket
 }
 
 func (s Server) OnlinePlayers() int {
-	online := 0
+	onlinePlayers := 0
 
-	for _, v := range s.clients {
-		if v.GetPlayer() != nil {
-			online++
+	for _, client := range s.clients {
+		if client.GetPlayer() == nil {
+			continue
+		}
+
+		onlinePlayers++
+	}
+
+	return onlinePlayers
+}
+
+func (s Server) MaxPlayers() int {
+	return s.config.MaxPlayers
+}
+
+func (s Server) SamplePlayers() []data.StatusResponseSamplePlayer {
+	return make([]data.StatusResponseSamplePlayer, 0)
+}
+
+func (s Server) Favicon() (*string, error) {
+	if s.favicon == nil {
+		return nil, nil
+	}
+
+	buf := &bytes.Buffer{}
+
+	if err := png.Encode(buf, *s.favicon); err != nil {
+		return nil, err
+	}
+
+	value := "data:image/png;base64," + base64.StdEncoding.EncodeToString(buf.Bytes())
+
+	return &value, nil
+}
+
+func (s Server) MOTD() proto.Chat {
+	return proto.Chat{
+		Text: s.config.MOTD,
+	}
+}
+
+func (s Server) Running() bool {
+	return s.isRunning
+}
+
+func (s Server) ProcessConsoleCommand(command string, shutdown *chan os.Signal) error {
+	args := strings.Split(command, " ")
+
+	switch args[0] {
+	case "stop", "shutdown", "close":
+		{
+			*shutdown <- os.Interrupt
+
+			return nil
+		}
+	default:
+		{
+			return fmt.Errorf("unknown console command: %s", args[0])
+		}
+	}
+}
+
+func (s *Server) NextEntityID() int64 {
+	s.entityID++
+
+	return s.entityID
+}
+
+func (s Server) OnlineMode() bool {
+	return s.config.OnlineMode
+}
+
+func (s Server) Difficulty() enum.Difficulty {
+	switch s.config.Difficulty {
+	case "peaceful":
+		{
+			return enum.DifficultyPeaceful
+		}
+	case "easy":
+		{
+			return enum.DifficultyEasy
+		}
+	case "hard":
+		{
+			return enum.DifficultyHard
+		}
+	default:
+		{
+			return enum.DifficultyNormal
+		}
+	}
+}
+
+func (s Server) Hardcore() bool {
+	return s.config.Hardcore
+}
+
+func (s Server) DefaultGamemode() enum.Gamemode {
+	switch s.config.DefaultGamemode {
+	case "creative":
+		{
+			return enum.GamemodeCreative
+		}
+	case "adventure":
+		{
+			return enum.GamemodeAdventure
+		}
+	case "spectator":
+		{
+			return enum.GamemodeSpectator
+		}
+	default:
+		{
+			return enum.GamemodeSurvival
+		}
+	}
+}
+
+func (s Server) WorldCount() int {
+	return len(s.worlds)
+}
+
+func (s Server) ViewDistance() int {
+	return s.config.ViewDistance
+}
+
+func (s Server) SimulationDistance() int {
+	return s.config.SimulationDistance
+}
+
+func (s Server) KeepAliveInterval() time.Duration {
+	return time.Duration(s.config.KeepAliveInterval) * time.Second
+}
+
+func (s Server) Players() []api.Player {
+	players := make([]api.Player, 0)
+
+	for _, client := range s.clients {
+		player := client.GetPlayer()
+
+		if player != nil {
+			players = append(players, player)
 		}
 	}
 
-	return online
+	return players
 }
 
-func (s Server) GetConfig() *types.Configuration {
-	return s.config
+func (s Server) Clients() []api.Client {
+	clients := make([]api.Client, 0)
+
+	for _, client := range s.clients {
+		clients = append(clients, client)
+	}
+
+	return clients
 }
 
-func (s Server) GetPrivateKey() *rsa.PrivateKey {
-	return s.privateKey
+func (s Server) Host() string {
+	return s.config.Host
 }
 
-func (s Server) ID() string {
-	return s.id
+func (s Server) Port() uint16 {
+	return s.config.Port
 }
 
-func (s Server) GetWorldManager() world.WorldManager {
-	return s.worldManager
-}
-
-var _ server.Server = &Server{}
+var _ api.Server = &Server{}

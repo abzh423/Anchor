@@ -1,94 +1,53 @@
 package game
 
 import (
-	"bytes"
-	"encoding/binary"
-	"strconv"
+	"math"
 
+	"github.com/golangminecraft/minecraft-server/src/api"
 	"github.com/golangminecraft/minecraft-server/src/api/enum"
-	"github.com/golangminecraft/minecraft-server/src/api/game"
-	"github.com/golangminecraft/minecraft-server/src/api/game/world"
-	"github.com/golangminecraft/minecraft-server/src/api/protocol"
+	proto "github.com/golangminecraft/minecraft-server/src/api/protocol"
 )
 
 type Player struct {
-	entityID int
-	uuid     string
+	entityID int64
+	gamemode enum.Gamemode
+	uuid     proto.UUID
 	username string
-	position protocol.AbsolutePosition
-	rotation game.Rotation
+	position proto.AbsolutePosition
+	rotation api.Rotation
 }
 
-func NewPlayer(entityID int, username string) *Player {
+func NewPlayer(entityID int64, username string, uuid proto.UUID, gamemode enum.Gamemode) api.Player {
 	return &Player{
 		entityID: entityID,
-		uuid:     "",
+		gamemode: gamemode,
 		username: username,
-		position: protocol.AbsolutePosition{
-			X: 0,
-			Y: 63,
-			Z: 0,
-		},
+		uuid:     uuid,
+		position: proto.AbsolutePosition{X: 0, Y: 63, Z: 0},
+		rotation: api.Rotation{Yaw: 0, Pitch: math.Pi},
 	}
 }
 
-func (p Player) Type() enum.EntityType {
-	return enum.EntityTypePlayer
-}
-
-func (p *Player) SetUUID(uuid string) {
-	p.uuid = uuid
-}
-
-func (p Player) UUID() string {
-	return p.uuid
-}
-
-func (p Player) EntityID() int {
+func (p Player) EntityID() int64 {
 	return p.entityID
-}
-
-func (p Player) UUIDBytes() ([]byte, error) {
-	firstHalfParsed, err := strconv.ParseUint(p.uuid[0:16], 16, 64)
-
-	if err != nil {
-		return nil, err
-	}
-
-	secondHalfParsed, err := strconv.ParseUint(p.uuid[16:32], 16, 64)
-
-	if err != nil {
-		return nil, err
-	}
-
-	buffer := &bytes.Buffer{}
-
-	if err := binary.Write(buffer, binary.BigEndian, firstHalfParsed); err != nil {
-		return nil, err
-	}
-
-	if err := binary.Write(buffer, binary.BigEndian, secondHalfParsed); err != nil {
-		return nil, err
-	}
-
-	return buffer.Bytes(), nil
-}
-
-func (p Player) UUIDWithHyphens() string {
-	return p.uuid
 }
 
 func (p Player) Username() string {
 	return p.username
 }
 
-func (p Player) Position() protocol.AbsolutePosition {
+func (p Player) UUID() proto.UUID {
+	return p.uuid
+}
+
+func (p Player) Gamemode() enum.Gamemode {
+	return p.gamemode
+}
+
+func (p Player) Position() proto.AbsolutePosition {
 	return p.position
 }
 
-func (p Player) Rotation() game.Rotation {
+func (p Player) Rotation() api.Rotation {
 	return p.rotation
 }
-
-var _ game.Player = &Player{}
-var _ world.Entity = &Player{}

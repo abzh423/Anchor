@@ -11,6 +11,28 @@ import (
 	"github.com/Tnze/go-mc/nbt"
 )
 
+var (
+	colorFormattingCodes = map[string]string{
+		"black":         "0",
+		"dark_blue":     "1",
+		"dark_green":    "2",
+		"dark_aqua":     "3",
+		"dark_red":      "4",
+		"dark_purple":   "5",
+		"gold":          "6",
+		"gray":          "7",
+		"dark_gray":     "8",
+		"blue":          "9",
+		"green":         "a",
+		"aqua":          "b",
+		"red":           "c",
+		"light_purple":  "d",
+		"yellow":        "e",
+		"white":         "f",
+		"minecoin_gold": "g",
+	}
+)
+
 type DataType interface {
 	DataTypeReader
 	DataTypeWriter
@@ -30,6 +52,7 @@ type (
 	UnsignedByte  uint8
 	Short         int16
 	UnsignedShort uint16
+	ShortLE       int16
 	Int           int32
 	UnsignedInt   uint32
 	Long          int64
@@ -37,6 +60,7 @@ type (
 	Float         float32
 	Double        float64
 	String        string
+	StringNT      string
 	Chat          struct {
 		Text          string `json:"text"`
 		Color         string `json:"color"`
@@ -44,6 +68,7 @@ type (
 		Italic        bool   `json:"italic,omitempty"`
 		Underlined    bool   `json:"underlined,omitempty"`
 		Strikethrough bool   `json:"strikethrough,omitempty"`
+		Obfuscated    bool   `json:"obfuscated,omitempty"`
 		Extra         []Chat `json:"extra,omitempty"`
 	}
 	Identifier       string
@@ -146,6 +171,20 @@ func (v *UnsignedShort) Decode(r io.Reader) (int64, error) {
 	err := binary.Read(r, binary.BigEndian, &value)
 
 	*v = UnsignedShort(value)
+
+	return 2, err
+}
+
+func (v ShortLE) Encode(w io.Writer) (int64, error) {
+	return 2, binary.Write(w, binary.LittleEndian, uint16(v))
+}
+
+func (v *ShortLE) Decode(r io.Reader) (int64, error) {
+	var value uint16
+
+	err := binary.Read(r, binary.LittleEndian, &value)
+
+	*v = ShortLE(value)
 
 	return 2, err
 }
@@ -272,6 +311,46 @@ func (v *String) Decode(r io.Reader) (int64, error) {
 	return n + int64(n2), nil
 }
 
+func (v StringNT) Encode(w io.Writer) (int64, error) {
+	n, err := w.Write([]byte(v))
+
+	if err != nil {
+		return int64(n), err
+	}
+
+	n2, err := w.Write([]byte{0x00})
+
+	return int64(n + n2), err
+}
+
+func (v *StringNT) Decode(r io.Reader) (int64, error) {
+	value := ""
+
+	var bytesRead int64 = 0
+
+	for {
+		data := make([]byte, 1)
+
+		n, err := r.Read(data)
+
+		if err != nil {
+			return bytesRead, err
+		}
+
+		bytesRead += int64(n)
+
+		if data[0] == 0x00 {
+			break
+		}
+
+		value += string(data[0])
+	}
+
+	*v = StringNT(value)
+
+	return bytesRead, nil
+}
+
 func (v Chat) Encode(w io.Writer) (int64, error) {
 	data, err := json.Marshal(v)
 
@@ -294,6 +373,42 @@ func (v *Chat) Decode(r io.Reader) (int64, error) {
 	}
 
 	return int64(n), json.Unmarshal([]byte(value), v)
+}
+
+func (v Chat) Format() string {
+	value := ""
+
+	if colorCode, ok := colorFormattingCodes[v.Color]; ok {
+		value += "\u00A7" + colorCode
+	}
+
+	if v.Bold {
+		value += "\u00A7l"
+	}
+
+	if v.Italic {
+		value += "\u00A7o"
+	}
+
+	if v.Underlined {
+		value += "\u00A7n"
+	}
+
+	if v.Strikethrough {
+		value += "\u00A7m"
+	}
+
+	if v.Obfuscated {
+		value += "\u00A7k"
+	}
+
+	value += v.Text
+
+	for _, extra := range v.Extra {
+		value += extra.Format()
+	}
+
+	return value
 }
 
 func (v Identifier) Encode(w io.Writer) (int64, error) {
@@ -322,10 +437,6 @@ func (v *VarInt) Decode(r io.Reader) (int64, error) {
 	return n, err
 }
 
-func (v VarInt) ByteLength() int64 {
-	return VarIntLength(int32(v))
-}
-
 func (v VarLong) Encode(w io.Writer) (int64, error) {
 	return WriteVarLong(int64(v), w)
 }
@@ -336,10 +447,6 @@ func (v *VarLong) Decode(r io.Reader) (int64, error) {
 	*v = VarLong(value)
 
 	return n, err
-}
-
-func (v VarLong) ByteLength() int64 {
-	return VarLongLength(int64(v))
 }
 
 func (v RelativePosition) Encode(w io.Writer) (int64, error) {
