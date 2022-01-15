@@ -46,6 +46,14 @@ The executable will now be located in the `bin` folder for you to run. It is rec
 
 The goal was to create this Minecraft server implementation from scratch, but it became clear that this was not going to happen by myself. I would like to give a big thanks to Tnze, the creator of the [go-mc](https://github.com/Tnze/go-mc) package, for their work on the amazing utilities for interacting with the Minecraft protocol.
 
+## Contributors
+
+<table>
+    <tr>
+        <td align="center"><a href="https://github.com/PassTheMayo"><img src="https://avatars.githubusercontent.com/u/16949253?v=4&s=100" width="100px;" alt=""/><br /><sub><b>Jacob Gunther</b></sub></a></td>
+    </tr>
+</table>
+
 ## Discord Server
 
 https://discord.gg/8G5hDECBWk
