@@ -13,8 +13,7 @@ This project was started to better understand the interaction between the server
 
 ## Features
 
-- [x] Server status
-    - [x] Favicon
+- [x] Server status (with favicon)
 - [x] Login
 - [x] Authentication
 - [x] Two-way encryption
