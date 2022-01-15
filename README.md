@@ -50,7 +50,7 @@ The goal was to create this Minecraft server implementation from scratch, but it
 
 <table>
     <tr>
-        <td align="center"><a href="https://github.com/PassTheMayo"><img src="https://avatars.githubusercontent.com/u/16949253?v=4&s=100" width="100px;" alt=""/><br /><sub><b>Jacob Gunther</b></sub></a><br/> Main Developer</td>
+        <td align="center"><a href="https://github.com/PassTheMayo"><img src="https://avatars.githubusercontent.com/u/16949253?v=4&s=100" width="100px;" alt=""/><br /><sub><b>Jacob Gunther</b></sub></a><br/></td>
     </tr>
 </table>
 
