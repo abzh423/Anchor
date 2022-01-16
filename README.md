@@ -18,7 +18,7 @@ This project was started to better understand the interaction between the server
 - [x] Authentication
 - [x] Two-way encryption
 - [x] Query
-- [ ] World generation (work-in-progress)
+- [x] World generation (only flat available)
 - [ ] Physics
 - [ ] Update blocks
 - [ ] Dropped entity interaction
