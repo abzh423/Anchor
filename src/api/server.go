@@ -7,6 +7,7 @@ import (
 	"github.com/golangminecraft/minecraft-server/src/api/data"
 	"github.com/golangminecraft/minecraft-server/src/api/enum"
 	proto "github.com/golangminecraft/minecraft-server/src/api/protocol"
+	"github.com/golangminecraft/minecraft-server/src/api/world"
 )
 
 type Server interface {
@@ -30,6 +31,8 @@ type Server interface {
 	Hardcore() bool
 	DefaultGamemode() enum.Gamemode
 	WorldCount() int
+	GetWorld(string) *world.World
+	NewWorld(string, world.WorldGenerator, world.WorldStore, map[string]interface{}) (*world.World, error)
 	ViewDistance() int
 	SimulationDistance() int
 	KeepAliveInterval() time.Duration

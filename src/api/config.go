@@ -28,6 +28,14 @@ type Configuration struct {
 	EnableQuery          bool   `yaml:"enable_query"`
 	QueryHost            string `yaml:"query_host"`
 	QueryPort            uint16 `yaml:"query_port"`
+	Worlds               []struct {
+		Name      string `yaml:"name"`
+		Generator string `yaml:"generator"`
+		Store     struct {
+			Name    string                 `yaml:"name"`
+			Options map[string]interface{} `yaml:"options"`
+		} `yaml:"store"`
+	} `yaml:"worlds"`
 }
 
 func NewConfiguration() Configuration {
