@@ -19,6 +19,9 @@ This project was started to better understand the interaction between the server
 - [x] Two-way encryption
 - [x] Query
 - [x] World generation (only flat available)
+- [x] World store
+    - [x] SQLite
+    - [x] File store
 - [ ] Physics
 - [ ] Update blocks
 - [ ] Dropped entity interaction
