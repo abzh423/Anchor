@@ -9,20 +9,20 @@ import (
 )
 
 type World struct {
-	name           string
-	folder         string
-	store          WorldStore
-	generator      WorldGenerator
-	modifiedChunks map[string]*Chunk
+	name         string
+	folder       string
+	store        WorldStore
+	generator    WorldGenerator
+	cachedChunks map[string]*Chunk
 }
 
 func NewWorld(name string, folder string, store WorldStore, generator WorldGenerator) *World {
 	return &World{
-		name:           name,
-		folder:         folder,
-		store:          store,
-		generator:      generator,
-		modifiedChunks: make(map[string]*Chunk),
+		name:         name,
+		folder:       folder,
+		store:        store,
+		generator:    generator,
+		cachedChunks: make(map[string]*Chunk),
 	}
 }
 
@@ -47,7 +47,7 @@ func (w *World) Initialize(storeOptions map[string]interface{}) error {
 }
 
 func (w *World) GetChunk(x, z int64) (*Chunk, error) {
-	chunk, ok := w.modifiedChunks[fmt.Sprintf("%d:%d", x, z)]
+	chunk, ok := w.cachedChunks[fmt.Sprintf("%d:%d", x, z)]
 
 	if ok {
 		return chunk, nil
@@ -66,7 +66,7 @@ func (w *World) GetChunk(x, z int64) (*Chunk, error) {
 			return nil, err
 		}
 
-		w.modifiedChunks[fmt.Sprintf("%d:%d", x, z)] = newChunk
+		w.cachedChunks[fmt.Sprintf("%d:%d", x, z)] = newChunk
 
 		chunk = newChunk
 	}
@@ -91,16 +91,22 @@ func (w *World) GenerateChunk(x, z int64) error {
 		return err
 	}
 
-	w.modifiedChunks[fmt.Sprintf("%d:%d", x, z)] = chunk
+	w.cachedChunks[fmt.Sprintf("%d:%d", x, z)] = chunk
 
 	return nil
 }
 
 func (w *World) Save() error {
-	for _, chunk := range w.modifiedChunks {
+	for _, chunk := range w.cachedChunks {
+		if !chunk.IsDirty() {
+			continue
+		}
+
 		if err := w.store.SetChunk(chunk.x, chunk.z, *chunk); err != nil {
 			return err
 		}
+
+		chunk.SetDirty(false)
 	}
 
 	return nil

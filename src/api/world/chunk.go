@@ -6,6 +6,7 @@ import (
 )
 
 type Chunk struct {
+	dirty   bool
 	x       int64
 	z       int64
 	blocks  []uint16
@@ -14,6 +15,7 @@ type Chunk struct {
 
 func NewChunk(x, z int64) *Chunk {
 	return &Chunk{
+		dirty:  true,
 		x:      x,
 		z:      z,
 		blocks: make([]uint16, 16*16*256),
@@ -24,6 +26,14 @@ func NewChunk(x, z int64) *Chunk {
 			},
 		},
 	}
+}
+
+func (c Chunk) IsDirty() bool {
+	return c.dirty
+}
+
+func (c *Chunk) SetDirty(value bool) {
+	c.dirty = value
 }
 
 func (c Chunk) GetBlock(x, y, z int64) *PaletteItem {
@@ -42,6 +52,7 @@ func (c *Chunk) SetBlock(x, y, z int64, item PaletteItem) {
 	c.blocks[index] = uint16(len(c.palette))
 
 	c.palette = append(c.palette, item)
+	c.dirty = true
 }
 
 func (c Chunk) Encode(w io.Writer) error {

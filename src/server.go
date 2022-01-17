@@ -118,6 +118,12 @@ func (s *Server) Initialize() error {
 
 				break
 			}
+		case "file":
+			{
+				worldStore = store.NewFileStore()
+
+				break
+			}
 		default:
 			{
 				return fmt.Errorf("unknown store \"%s\" for world \"%s\"", worldMeta.Store.Name, worldMeta.Name)
@@ -390,6 +396,16 @@ func (s *Server) NewWorld(name string, generator world.WorldGenerator, store wor
 	s.worlds[name] = world
 
 	return world, nil
+}
+
+func (s *Server) OpenWorld(name string, store world.WorldStore, storeOptions map[string]interface{}) (*world.World, error) {
+	if _, ok := s.worlds[name]; ok {
+		return nil, fmt.Errorf("world %s already exists in cache", name)
+	}
+
+	// TODO open world code
+
+	return nil, nil
 }
 
 func (s Server) ViewDistance() int {

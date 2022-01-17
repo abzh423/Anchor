@@ -33,6 +33,7 @@ type Server interface {
 	WorldCount() int
 	GetWorld(string) *world.World
 	NewWorld(string, world.WorldGenerator, world.WorldStore, map[string]interface{}) (*world.World, error)
+	OpenWorld(string, world.WorldStore, map[string]interface{}) (*world.World, error)
 	ViewDistance() int
 	SimulationDistance() int
 	KeepAliveInterval() time.Duration
