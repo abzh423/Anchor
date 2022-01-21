@@ -45,6 +45,10 @@ cd Anchor
 
 The executable will now be located in the `bin` folder for you to run. It is recommended that you create a test folder and copy this executable to there so the server does not create a bunch of directories during startup within the source folder.
 
+## Compatibility
+
+Please note that this is not meant to be a drop-in replacement for existing servers. All data storage formats have been modified from the standard Bukkit/Spigot format into a much more clean and simple format. Since the world storage has also been changed, attempting to read region data from a Notchian server will result in an error. There will eventually be a conversion tool available to convert (most) data from previous servers into our format, but since this server is still not entirely functional, that will be a release for a later time.
+
 ## Credit
 
 The goal was to create this Minecraft server implementation from scratch, but it became clear that this was not going to happen by myself. I would like to give a big thanks to Tnze, the creator of the [go-mc](https://github.com/Tnze/go-mc) package, for their work on the amazing utilities for interacting with the Minecraft protocol.
@@ -53,7 +57,7 @@ The goal was to create this Minecraft server implementation from scratch, but it
 
 <table>
     <tr>
-        <td align="center"><a href="https://github.com/PassTheMayo"><img src="https://avatars.githubusercontent.com/u/16949253?v=4&s=100" width="100px;" alt=""/><br /><sub><b>Jacob Gunther</b></sub></a><br/></td>
+        <td align="center"><a href="https://github.com/PassTheMayo"><img src="https://avatars.githubusercontent.com/u/16949253?v=4&s=100" width="100px;" alt=""/><br /><b>Jacob Gunther</b></a><br/><sub>Main Developer</sub></td>
     </tr>
 </table>
 
