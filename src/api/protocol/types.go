@@ -75,7 +75,7 @@ type (
 	VarInt           int32
 	VarLong          int64
 	RelativePosition struct {
-		X, Y, Z int32
+		X, Y, Z int64
 	}
 	AbsolutePosition struct {
 		X, Y, Z float64
@@ -86,6 +86,10 @@ type (
 	NBT       struct {
 		Value   interface{}
 		RootTag string
+	}
+	PackedArray struct {
+		Value        []int64
+		BitsPerEntry int
 	}
 )
 
@@ -458,9 +462,9 @@ func (v *RelativePosition) Decode(r io.Reader) (int64, error) {
 
 	err := binary.Read(r, binary.BigEndian, &value)
 
-	v.X = int32(value >> 38)
-	v.Y = int32(value << 52 >> 52)
-	v.Z = int32(value << 26 >> 38)
+	v.X = int64(value >> 38)
+	v.Y = int64(value << 52 >> 52)
+	v.Z = int64(value << 26 >> 38)
 
 	return 8, err
 }

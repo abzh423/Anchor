@@ -7,10 +7,10 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"fmt"
-	"log"
 
 	"github.com/Tnze/go-mc/net/CFB8"
 	"github.com/golangminecraft/minecraft-server/src/api"
+	log "github.com/golangminecraft/minecraft-server/src/api/logger"
 	proto "github.com/golangminecraft/minecraft-server/src/api/protocol"
 	"github.com/golangminecraft/minecraft-server/src/game"
 	"github.com/golangminecraft/minecraft-server/src/util"
@@ -132,7 +132,7 @@ func Login(server api.Server, client api.Client) error {
 		return err
 	}
 
-	log.Printf("%s (%s) has joined the game\n", username, uuid)
+	log.Infof("login", "%s (%s) has joined the game\n", username, uuid)
 
 	client.SetPlayer(game.NewPlayer(server.NextEntityID(), username, uuid, server.DefaultGamemode()))
 

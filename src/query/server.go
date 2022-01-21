@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"log"
 	"math/rand"
 	"net"
 	"strconv"
 
 	"github.com/golangminecraft/minecraft-server/src/api"
+	log "github.com/golangminecraft/minecraft-server/src/api/logger"
 	"github.com/golangminecraft/minecraft-server/src/util"
 )
 
@@ -62,7 +62,7 @@ func (s *Server) Start(host string, port uint16) error {
 func (s *Server) AcceptConnections() {
 	for s.isRunning {
 		if err := s.HandleConnection(); err != nil {
-			log.Println(err)
+			log.Error("query", err)
 		}
 	}
 }
@@ -141,7 +141,7 @@ func (s *Server) HandleConnection() error {
 				return err
 			}
 
-			log.Printf("Received full query request from %s\n", addr.String())
+			log.Infof("query", "Received full query request from %s\n", addr.String())
 		} else {
 			// Basic Query
 
@@ -149,7 +149,7 @@ func (s *Server) HandleConnection() error {
 				return err
 			}
 
-			log.Printf("Received basic query request from %s\n", addr.String())
+			log.Infof("query", "Received basic query request from %s\n", addr.String())
 		}
 	}
 

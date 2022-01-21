@@ -1,19 +1,27 @@
 package protocol
 
-func PackInt64Array(arr []int64, bitsPerEntry int) []int64 {
-	/* values := make([]int64, 0)
+import (
+	"encoding/binary"
+)
 
-	var mask int64 = 1<<bitsPerEntry - 1
-	var carryValue int64
-	var carryOffset int
+func PackInt64Array(arr []int64, bitsPerEntry int) (returnValue []int64) {
+	bits := make([]byte, len(arr)*bitsPerEntry)
 
-	for index, value := range arr {
-		currentValue := value & mask
+	for k, value := range arr {
+		for b := 0; b < bitsPerEntry; b++ {
+			if value&(1<<b) == 1<<b {
+				bits[k*bitsPerEntry+b] = 1
+			} else {
+				bits[k*bitsPerEntry+b] = 0
+			}
+		}
 	}
 
-	// TODO how do I do this???
+	for i, l := 0, len(bits); i < l; i += bitsPerEntry {
+		data := bits[i : i+bitsPerEntry]
 
-	*/
+		returnValue = append(returnValue, int64(binary.BigEndian.Uint64(data)))
+	}
 
-	return nil
+	return
 }

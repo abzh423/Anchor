@@ -125,5 +125,41 @@ func Gameplay(server api.Server, client api.Client) error {
 		return err
 	}
 
-	return client.WritePacket(*playerInfoPacket)
+	if err := client.WritePacket(*playerInfoPacket); err != nil {
+		return err
+	}
+
+	/* playerChunk := client.GetPlayer().Chunk()
+
+	for x := playerChunk.X - 2; x < playerChunk.X+2; x++ {
+		for z := playerChunk.Z - 2; z < playerChunk.Z+2; z++ {
+			heightmap := make([]int64, 0)
+
+			chunk, err := server.DefaultWorld().GetChunkOrGenerate(x, z)
+
+			if err != nil {
+				return err
+			}
+
+			chunkData, err := chunk.RawChunkData()
+
+			chunkDataPacket, err := proto.Marshal(
+				proto.VarInt(0x22), // Chunk Data and Update Light (0x22)
+				proto.Int(x),       // Chunk X
+				proto.Int(z),       // Chunk Z
+				proto.NBT{Value: data.Heightmap{MotionBlocking: proto.PackInt64Array(heightmap, int(math.Ceil(math.Log2(256+1))))}}, // Heightmaps
+				proto.ByteArray(chunkData),
+			)
+
+			if err != nil {
+				return err
+			}
+
+			if err := client.WritePacket(*chunkDataPacket); err != nil {
+				return err
+			}
+		}
+	} */
+
+	return nil
 }

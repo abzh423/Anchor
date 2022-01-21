@@ -11,5 +11,10 @@ type Player interface {
 	UUID() proto.UUID
 	Gamemode() enum.Gamemode
 	Position() proto.AbsolutePosition
+	SetPosition(proto.AbsolutePosition)
+	Chunk() proto.RelativePosition
+	SetSentChunk(int64, int64)
+	HasSentChunk(int64, int64) bool
 	Rotation() Rotation
+	SetRotation(Rotation)
 }

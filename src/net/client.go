@@ -7,12 +7,12 @@ import (
 	"encoding/binary"
 	"errors"
 	"io"
-	"log"
 	"net"
 	"time"
 
 	"github.com/golangminecraft/minecraft-server/src/api"
 	"github.com/golangminecraft/minecraft-server/src/api/enum"
+	log "github.com/golangminecraft/minecraft-server/src/api/logger"
 	proto "github.com/golangminecraft/minecraft-server/src/api/protocol"
 	"github.com/golangminecraft/minecraft-server/src/components"
 	"github.com/golangminecraft/minecraft-server/src/handlers"
@@ -85,13 +85,17 @@ func (c *Client) HandleConnection(server api.Server) error {
 	case enum.ClientStateStatus:
 		{
 			if err := Status(server, c); err != nil {
-				log.Println(err)
+				log.Error("client", err)
 			}
+
+			break
 		}
 	case enum.ClientStateLogin:
 		{
 			if err := Login(server, c); err != nil {
-				log.Println(err)
+				log.Error("client", err)
+
+				break
 			}
 
 			for _, component := range components.Components {
@@ -99,7 +103,9 @@ func (c *Client) HandleConnection(server api.Server) error {
 			}
 
 			if err := Gameplay(server, c); err != nil {
-				log.Println(err)
+				log.Error("client", err)
+
+				break
 			}
 
 			go c.StartKeepAlive(server.KeepAliveInterval())
@@ -117,7 +123,7 @@ func (c *Client) HandleConnection(server api.Server) error {
 					}
 
 					if err := handler.Execute(server, c, *packet); err != nil {
-						log.Println(err)
+						log.Error("handler", err)
 					}
 
 					break
@@ -128,11 +134,11 @@ func (c *Client) HandleConnection(server api.Server) error {
 		}
 	default:
 		{
-			log.Printf("received unknown next state value: %d\n", handshake.NextState)
+			log.Errorf("client", "received unknown next state value: %d\n", handshake.NextState)
 		}
 	}
 
-	log.Printf("Client %s has disconnected\n", c.RemoteAddr())
+	log.Infof("client", "Client %s has disconnected\n", c.RemoteAddr())
 
 	return c.Close()
 }
@@ -210,7 +216,7 @@ func (c *Client) StartKeepAlive(interval time.Duration) {
 		payload := make([]byte, 8)
 
 		if _, err := rand.Read(payload); err != nil {
-			log.Println(err)
+			log.Error("keepalive", err)
 
 			break
 		}
@@ -223,13 +229,13 @@ func (c *Client) StartKeepAlive(interval time.Duration) {
 		)
 
 		if err != nil {
-			log.Println(err)
+			log.Error("keepalive", err)
 
 			break
 		}
 
 		if err = c.WritePacket(*keepAlivePacket); err != nil {
-			log.Println(err)
+			log.Error("keepalive", err)
 
 			break
 		}

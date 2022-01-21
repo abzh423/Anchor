@@ -1,10 +1,10 @@
 package components
 
 import (
-	"log"
 	"time"
 
 	"github.com/golangminecraft/minecraft-server/src/api"
+	log "github.com/golangminecraft/minecraft-server/src/api/logger"
 	proto "github.com/golangminecraft/minecraft-server/src/api/protocol"
 )
 
@@ -61,7 +61,7 @@ func (c *BroadcastLatency) Run() error {
 			}
 
 			if err := client.WritePacket(*playerInfoPacket); err != nil {
-				log.Println(err)
+				log.Error("broadcastlatencycomponent", err)
 			}
 		}
 

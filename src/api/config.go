@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 
 	"gopkg.in/yaml.v2"
 )
@@ -28,40 +27,31 @@ type Configuration struct {
 	EnableQuery          bool   `yaml:"enable_query"`
 	QueryHost            string `yaml:"query_host"`
 	QueryPort            uint16 `yaml:"query_port"`
-	Worlds               []struct {
-		Name      string `yaml:"name"`
-		Generator string `yaml:"generator"`
-		Store     struct {
-			Name    string                 `yaml:"name"`
-			Options map[string]interface{} `yaml:"options"`
-		} `yaml:"store"`
-	} `yaml:"worlds"`
 }
 
-func NewConfiguration() Configuration {
+func NewConfiguration() (*Configuration, error) {
 	seed := make([]byte, 16)
 
-	if _, err := rand.Read(seed); err != nil {
-		log.Fatal(err)
-	}
+	_, err := rand.Read(seed)
 
-	return Configuration{
-		Host:               "0.0.0.0",
-		Port:               25565,
-		OnlineMode:         true,
-		MOTD:               "A Minecraft Server",
-		MaxPlayers:         20,
-		Difficulty:         "normal",
-		Seed:               hex.EncodeToString(seed),
-		Hardcore:           false,
-		DefaultGamemode:    "survival",
-		ViewDistance:       10,
-		SimulationDistance: 10,
-		KeepAliveInterval:  15,
-		EnableQuery:        true,
-		QueryHost:          "0.0.0.0",
-		QueryPort:          25565,
-	}
+	return &Configuration{
+		Host:                 "0.0.0.0",
+		Port:                 25565,
+		OnlineMode:           true,
+		MOTD:                 "AnvilMC Server",
+		MaxPlayers:           20,
+		Difficulty:           "normal",
+		CompressionThreshold: -1,
+		Seed:                 hex.EncodeToString(seed),
+		Hardcore:             false,
+		DefaultGamemode:      "survival",
+		ViewDistance:         10,
+		SimulationDistance:   10,
+		KeepAliveInterval:    15,
+		EnableQuery:          true,
+		QueryHost:            "0.0.0.0",
+		QueryPort:            25565,
+	}, err
 }
 
 func (c *Configuration) ReadFromFile(path string) error {

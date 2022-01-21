@@ -1,4 +1,4 @@
-package world
+package chunk
 
 import (
 	"encoding/binary"
@@ -7,8 +7,9 @@ import (
 )
 
 type PaletteItem struct {
-	Name       string
-	Properties map[string]interface{}
+	ID         uint32                 `nbt:"id"`
+	Name       string                 `nbt:"name"`
+	Properties map[string]interface{} `nbt:"properties"`
 }
 
 func (p PaletteItem) Encode(w io.Writer) error {

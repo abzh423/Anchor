@@ -1,6 +1,10 @@
 package generators
 
-import "github.com/golangminecraft/minecraft-server/src/api/world"
+import "github.com/golangminecraft/minecraft-server/src/api/world/chunk"
+
+func init() {
+	GeneratorsMap["flat"] = flatGenerator{}
+}
 
 type flatGenerator struct {
 }
@@ -9,8 +13,8 @@ func (f flatGenerator) Initialize() error {
 	return nil
 }
 
-func (f flatGenerator) GenerateChunk(x, z int64) (*world.Chunk, error) {
-	chunk := world.NewChunk(x, z)
+func (f flatGenerator) GenerateChunk(x, z int64) (*chunk.Chunk, error) {
+	c := chunk.NewChunk()
 
 	var bx int64
 	var by int64
@@ -20,17 +24,20 @@ func (f flatGenerator) GenerateChunk(x, z int64) (*world.Chunk, error) {
 		for bz = 0; bz < 16; bz++ {
 			for by = 0; by < 5; by++ {
 				if by == 0 {
-					chunk.SetBlock(bx, by, bz, world.PaletteItem{
+					c.SetBlock(bx, by, bz, chunk.PaletteItem{
+						ID:         7,
 						Name:       "minecraft:bedrock",
 						Properties: make(map[string]interface{}),
 					})
 				} else if by >= 1 && by <= 3 {
-					chunk.SetBlock(bx, by, bz, world.PaletteItem{
+					c.SetBlock(bx, by, bz, chunk.PaletteItem{
+						ID:         3,
 						Name:       "minecraft:dirt",
 						Properties: make(map[string]interface{}),
 					})
 				} else if by == 4 {
-					chunk.SetBlock(bx, by, bz, world.PaletteItem{
+					c.SetBlock(bx, by, bz, chunk.PaletteItem{
+						ID:         2,
 						Name:       "minecraft:grass_block",
 						Properties: make(map[string]interface{}),
 					})
@@ -39,11 +46,9 @@ func (f flatGenerator) GenerateChunk(x, z int64) (*world.Chunk, error) {
 		}
 	}
 
-	return chunk, nil
+	return c, nil
 }
 
 func (f flatGenerator) Close() error {
 	return nil
 }
-
-var FlatGenerator world.WorldGenerator = flatGenerator{}

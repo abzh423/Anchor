@@ -30,10 +30,7 @@ type Server interface {
 	Difficulty() enum.Difficulty
 	Hardcore() bool
 	DefaultGamemode() enum.Gamemode
-	WorldCount() int
-	GetWorld(string) *world.World
-	NewWorld(string, world.WorldGenerator, world.WorldStore, map[string]interface{}) (*world.World, error)
-	OpenWorld(string, world.WorldStore, map[string]interface{}) (*world.World, error)
+	DefaultWorld() *world.World
 	ViewDistance() int
 	SimulationDistance() int
 	KeepAliveInterval() time.Duration
@@ -41,4 +38,5 @@ type Server interface {
 	Clients() []Client
 	Host() string
 	Port() uint16
+	WorldManager() *world.WorldManager
 }

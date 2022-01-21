@@ -1,9 +1,9 @@
 <p align="center">
     <img width="196" height="196" src="https://avatars.githubusercontent.com/u/96201133">
-    <h3 align="center">Minecraft-Server</h3>
-    <p align="center">A Minecraft server implementation written in pure Go.</p>
+    <h3 align="center">Anchor</h3>
+    <p align="center">A Minecraft server implementation written in Go.</p>
     <p align="center">
-        <a href="https://github.com/GoLangMinecraft/Minecraft-Server/issues/new">Report an Issue</a> &bullet; <a href="https://github.com/GoLangMinecraft/Minecraft-Server/compare">Open a Pull Request</a> &bullet; <a href="https://discord.gg/8G5hDECBWk">Discord Server</a>
+        <a href="https://github.com/AnchorMC/Anchor/issues/new">Report an Issue</a> &bullet; <a href="https://github.com/AnchorMC/Anchor/compare">Open a Pull Request</a> &bullet; <a href="https://discord.gg/8G5hDECBWk">Discord Server</a>
     </p>
 </p>
 
@@ -19,9 +19,8 @@ This project was started to better understand the interaction between the server
 - [x] Two-way encryption
 - [x] Query
 - [x] World generation (only flat available)
-- [x] World store
-    - [x] SQLite
-    - [x] File store
+- [x] Region store
+- [x] Player movement and rotation
 - [ ] Physics
 - [ ] Update blocks
 - [ ] Dropped entity interaction
@@ -38,8 +37,8 @@ This project was started to better understand the interaction between the server
 There will be no distributable binaries until there is a working release with most of the features checklist completed. In the mean time, you are free to build from source if you would like to.
 
 ```
-git clone https://github.com/GoLangMinecraft/Minecraft-Server.git
-cd Minecraft-Server
+git clone https://github.com/AnchorMC/Anchor.git
+cd Anchor
 ./scripts/build # or .\scripts\build.bat for Windows
 ```
 
@@ -63,4 +62,4 @@ https://discord.gg/8G5hDECBWk
 
 ## License
 
-[GNU General Public License v3.0](https://github.com/GoLangMinecraft/Minecraft-Server/blob/main/LICENSE)
+[GNU General Public License v3.0](https://github.com/AnchorMC/Anchor/blob/main/LICENSE)

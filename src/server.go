@@ -8,7 +8,6 @@ import (
 	"image"
 	"image/png"
 	"io/ioutil"
-	"log"
 	"os"
 	"path"
 	"strings"
@@ -17,53 +16,58 @@ import (
 	"github.com/golangminecraft/minecraft-server/src/api"
 	"github.com/golangminecraft/minecraft-server/src/api/data"
 	"github.com/golangminecraft/minecraft-server/src/api/enum"
+	log "github.com/golangminecraft/minecraft-server/src/api/logger"
 	proto "github.com/golangminecraft/minecraft-server/src/api/protocol"
 	"github.com/golangminecraft/minecraft-server/src/api/world"
 	"github.com/golangminecraft/minecraft-server/src/components"
-	"github.com/golangminecraft/minecraft-server/src/game/generators"
-	"github.com/golangminecraft/minecraft-server/src/game/store"
 	"github.com/golangminecraft/minecraft-server/src/handlers"
 	"github.com/golangminecraft/minecraft-server/src/net"
 	"github.com/golangminecraft/minecraft-server/src/query"
 )
 
 type Server struct {
-	isRunning   bool
-	config      api.Configuration
-	cwd         string
-	socket      api.Socket
-	clients     map[string]api.Client
-	worlds      map[string]*world.World
-	favicon     *image.Image
-	entityID    int64
-	queryServer api.QueryServer
+	isRunning    bool
+	config       *api.Configuration
+	cwd          string
+	socket       api.Socket
+	clients      map[string]api.Client
+	favicon      *image.Image
+	entityID     int64
+	queryServer  api.QueryServer
+	worldManager *world.WorldManager
 }
 
-func NewServer(cwd string) api.Server {
-	return &Server{
-		isRunning:   false,
-		config:      api.NewConfiguration(),
-		cwd:         cwd,
-		socket:      net.NewSocket(),
-		clients:     make(map[string]api.Client),
-		worlds:      make(map[string]*world.World),
-		favicon:     nil,
-		entityID:    0,
-		queryServer: query.NewServer(),
+func NewServer(cwd string) (api.Server, error) {
+	config, err := api.NewConfiguration()
+
+	if err != nil {
+		return nil, err
 	}
+
+	return &Server{
+		isRunning:    false,
+		config:       config,
+		cwd:          cwd,
+		socket:       net.NewSocket(),
+		clients:      make(map[string]api.Client),
+		favicon:      nil,
+		entityID:     0,
+		queryServer:  query.NewServer(),
+		worldManager: world.NewWorldManager(cwd),
+	}, nil
 }
 
 func (s *Server) Initialize() error {
 	if err := s.config.ReadFromFile(path.Join(s.cwd, "config.yml")); err != nil {
-		log.Println(err)
+		log.Info("config", err)
 	}
 
 	if err := s.config.WriteToFile(path.Join(s.cwd, "config.yml")); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	if err := s.config.Validate(); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	if err := s.queryServer.Initialize(s); err != nil {
@@ -71,11 +75,11 @@ func (s *Server) Initialize() error {
 	}
 
 	if err := os.Mkdir(path.Join(s.cwd, "worlds"), 0777); err != nil && !errors.Is(err, os.ErrExist) {
-		log.Fatal(err)
+		return err
 	}
 
 	if err := os.Mkdir(path.Join(s.cwd, "logs"), 0777); err != nil && !errors.Is(err, os.ErrExist) {
-		log.Fatal(err)
+		return err
 	}
 
 	if data, err := ioutil.ReadFile(path.Join(s.cwd, "favicon.png")); err == nil {
@@ -90,65 +94,22 @@ func (s *Server) Initialize() error {
 
 	for _, component := range components.Components {
 		if err := component.Initialize(s); err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	for _, worldMeta := range s.config.Worlds {
-		var worldGenerator world.WorldGenerator
-		var worldStore world.WorldStore
-
-		switch worldMeta.Generator {
-		case "flat":
-			{
-				worldGenerator = generators.FlatGenerator
-
-				break
-			}
-		default:
-			{
-				return fmt.Errorf("unknown generator \"%s\" for world \"%s\"", worldMeta.Generator, worldMeta.Name)
-			}
-		}
-
-		switch worldMeta.Store.Name {
-		case "sqlite":
-			{
-				worldStore = store.NewSQLiteStore()
-
-				break
-			}
-		case "file":
-			{
-				worldStore = store.NewFileStore()
-
-				break
-			}
-		default:
-			{
-				return fmt.Errorf("unknown store \"%s\" for world \"%s\"", worldMeta.Store.Name, worldMeta.Name)
-			}
-		}
-
-		world, err := s.NewWorld(worldMeta.Name, worldGenerator, worldStore, worldMeta.Store.Options)
-
-		if err != nil {
 			return err
 		}
-
-		for x := -10; x <= 10; x++ {
-			for z := -10; z <= 10; z++ {
-				if err := world.GenerateChunk(int64(x), int64(z)); err != nil {
-					return err
-				}
-			}
-		}
-
-		log.Printf("Created new world %s\n", worldMeta.Name)
 	}
 
-	log.Printf("Initialized %d components\n", len(components.Components))
-	log.Printf("Loaded %d packet handlers\n", len(handlers.Handlers))
+	log.Infof("server", "Initialized %d components\n", len(components.Components))
+	log.Infof("server", "Loaded %d packet handlers\n", len(handlers.Handlers))
+
+	if err := s.worldManager.LoadAllWorlds(); err != nil {
+		return err
+	}
+
+	if _, ok := s.worldManager.GetWorld("overworld"); !ok {
+		if _, err := s.worldManager.CreateWorld("overworld"); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
@@ -160,7 +121,7 @@ func (s *Server) Start() error {
 
 	for _, component := range components.Components {
 		if err := component.Start(); err != nil {
-			log.Fatal(err)
+			return err
 		}
 	}
 
@@ -171,10 +132,10 @@ func (s *Server) Start() error {
 			return err
 		}
 
-		log.Printf("Query server running on %s:%d\n", s.config.QueryHost, s.config.QueryPort)
+		log.Infof("query", "Query server running on %s:%d\n", s.config.QueryHost, s.config.QueryPort)
 	}
 
-	log.Printf("Server running on %s:%d\n", s.config.Host, s.config.Port)
+	log.Infof("server", "Server running on %s:%d\n", s.config.Host, s.config.Port)
 
 	go s.AcceptConnections()
 
@@ -188,18 +149,18 @@ func (s *Server) Close() error {
 		// TODO properly send shutdown message to players
 
 		if err := client.Close(); err != nil {
-			log.Println(err)
+			log.Error("server", err)
 		}
 	}
 
-	for _, world := range s.worlds {
-		log.Printf("Saving all chunks for world %s...\n", world.Name())
+	for _, world := range s.WorldManager().Worlds() {
+		log.Infof("worlds", "Saving all chunks for world %s...\n", world.Name())
 
 		if err := world.Close(); err != nil {
 			return err
 		}
 
-		log.Printf("Saved all chunks for world %s\n", world.Name())
+		log.Infof("worlds", "Saved all chunks for world %s\n", world.Name())
 	}
 
 	if s.config.EnableQuery {
@@ -207,7 +168,7 @@ func (s *Server) Close() error {
 			return err
 		}
 
-		log.Println("Closed query server")
+		log.Info("query", "Closed query server")
 	}
 
 	return s.socket.Close()
@@ -218,21 +179,21 @@ func (s *Server) AcceptConnections() {
 		client, err := s.socket.AcceptConnection()
 
 		if err != nil {
-			log.Println(err)
+			log.Error("server", err)
 
 			continue
 		}
 
-		log.Printf("Received a connection from %s\n", client.RemoteAddr())
+		log.Infof("server", "Received a connection from %s\n", client.RemoteAddr())
 
 		s.AddClient(client)
 
 		go (func() {
 			if err := client.HandleConnection(s); err != nil {
-				log.Println(err)
+				log.Error("client", err)
 
 				if err = client.Close(); err != nil {
-					log.Println(err)
+					log.Error("client", err)
 				}
 			}
 
@@ -374,38 +335,14 @@ func (s Server) DefaultGamemode() enum.Gamemode {
 	}
 }
 
-func (s Server) WorldCount() int {
-	return len(s.worlds)
-}
+func (s *Server) DefaultWorld() *world.World {
+	world, ok := s.worldManager.GetWorld("overworld") // TODO allow specifying default world and better world initializing
 
-func (s Server) GetWorld(name string) *world.World {
-	return s.worlds[name]
-}
-
-func (s *Server) NewWorld(name string, generator world.WorldGenerator, store world.WorldStore, storeOptions map[string]interface{}) (*world.World, error) {
-	if _, ok := s.worlds[name]; ok {
-		return nil, fmt.Errorf("unable to create a new world, already have one loaded with name %s", name)
+	if !ok || world == nil {
+		panic(errors.New("attempted to get default world, but none was found"))
 	}
 
-	world := world.NewWorld(name, path.Join(s.cwd, "worlds"), store, generator)
-
-	if err := world.Initialize(storeOptions); err != nil {
-		return nil, err
-	}
-
-	s.worlds[name] = world
-
-	return world, nil
-}
-
-func (s *Server) OpenWorld(name string, store world.WorldStore, storeOptions map[string]interface{}) (*world.World, error) {
-	if _, ok := s.worlds[name]; ok {
-		return nil, fmt.Errorf("world %s already exists in cache", name)
-	}
-
-	// TODO open world code
-
-	return nil, nil
+	return world
 }
 
 func (s Server) ViewDistance() int {
@@ -450,6 +387,10 @@ func (s Server) Host() string {
 
 func (s Server) Port() uint16 {
 	return s.config.Port
+}
+
+func (s *Server) WorldManager() *world.WorldManager {
+	return s.worldManager
 }
 
 var _ api.Server = &Server{}
