@@ -21,6 +21,7 @@ This project was started to better understand the interaction between the server
 - [x] World generation (only flat available)
 - [x] Region store
 - [x] Player movement and rotation
+- [ ] Chunk updates
 - [ ] Physics
 - [ ] Update blocks
 - [ ] Dropped entity interaction
@@ -28,7 +29,7 @@ This project was started to better understand the interaction between the server
 - [ ] Plugins
 - [x] Console input
 - [ ] RCON
-- [ ] Chat
+- [x] Chat
 - [ ] Crafting
 - [ ] ... and so many utility APIs
 
