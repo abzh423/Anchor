@@ -128,9 +128,9 @@
 - [ ] Generate Structure
 - [x] Keep Alive (serverbound)
 - [ ] Lock Difficulty
-- [ ] Player Position
+- [x] Player Position
 - [x] Player Position And Rotation (serverbound)
-- [ ] Player Rotation
+- [x] Player Rotation
 - [ ] Player Movement
 - [ ] Vehicle Move (serverbound)
 - [ ] Steer Boat
