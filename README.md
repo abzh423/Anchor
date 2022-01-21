@@ -51,7 +51,7 @@ Please note that this is not meant to be a drop-in replacement for existing serv
 
 ## Credit
 
-The goal was to create this Minecraft server implementation from scratch, but it became clear that this was not going to happen by myself. I would like to give a big thanks to Tnze, the creator of the [go-mc](https://github.com/Tnze/go-mc) package, for their work on the amazing utilities for interacting with the Minecraft protocol.
+The goal was to create this Minecraft server implementation from scratch, but it became clear that this was not going to happen by myself. I would like to give a big thanks to Tnze, the creator of the [go-mc](https://github.com/Tnze/go-mc) package, for their work on the amazing utilities for interacting with the Minecraft protocol. I also couldn't have made this server implementation without the extensive documentation of the Minecraft protocol from the amazing contributors of [wiki.vg](https://wiki.vg).
 
 ## Contributors
 
