@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"log"
 	"math"
 	"reflect"
 
@@ -16,7 +15,7 @@ import (
 type ChunkSection struct {
 	Index           int64                  `nbt:"Index"`
 	Y               int64                  `nbt:"Y"`
-	Data            []int32                `nbt:"Data"`
+	Data            []int16                `nbt:"Data"`
 	Palette         []world.Block          `nbt:"Palette"`
 	blockUpdateChan chan world.BlockUpdate `nbt:"-"`
 }
@@ -25,7 +24,7 @@ func NewChunkSection(index int64) world.ChunkSection {
 	return &ChunkSection{
 		Index: index,
 		Y:     index * world.SectionHeight,
-		Data:  make([]int32, 16*16*16),
+		Data:  make([]int16, 16*16*16),
 		Palette: []world.Block{
 			{
 				ID:         0,
@@ -64,16 +63,14 @@ func (c ChunkSection) GetBlock(x, y, z int64) *world.Block {
 func (c *ChunkSection) SetBlock(x, y, z int64, item world.Block) {
 	index := x + z*16 + y*16*16
 
-	var paletteIndex int32 = -1
+	var paletteIndex int16 = -1
 
 	for k, v := range c.Palette {
 		if v.Name != item.Name || !reflect.DeepEqual(v.Properties, item.Properties) {
 			continue
 		}
 
-		log.Println("Found duplicate palette value", len(c.Palette))
-
-		paletteIndex = int32(k)
+		paletteIndex = int16(k)
 
 		break
 	}
@@ -83,7 +80,7 @@ func (c *ChunkSection) SetBlock(x, y, z int64, item world.Block) {
 	if paletteIndex >= 0 {
 		c.Data[index] = paletteIndex
 	} else {
-		c.Data[index] = int32(len(c.Palette))
+		c.Data[index] = int16(len(c.Palette))
 
 		c.Palette = append(c.Palette, item)
 	}

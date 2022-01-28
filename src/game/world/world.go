@@ -170,10 +170,10 @@ func (w *World) GenerateChunk(x, z int64) error {
 		region = w.CreateRegion(x/world.RegionSize, z/world.RegionSize)
 	}
 
-	c := region.GetChunk(x, z)
+	c := region.GetChunk(x%world.RegionSize, z%world.RegionSize)
 
 	if c == nil {
-		c = region.CreateChunk(x, z)
+		c = region.CreateChunk(x%world.RegionSize, z%world.RegionSize)
 	}
 
 	if err := w.generator.GenerateChunk(c); err != nil {

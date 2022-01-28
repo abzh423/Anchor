@@ -121,13 +121,13 @@ func (s *Server) Initialize() error {
 		var x int64
 		var z int64
 
-		for x = 0; x <= 3; x++ {
-			for z = 0; z <= 3; z++ {
+		for x = 0; x <= 16; x++ {
+			for z = 0; z <= 16; z++ {
 				if err = world.GenerateChunk(x, z); err != nil {
 					return err
 				}
 
-				log.Debugf("world", "Generated chunk (%d, %d)\n", x, z)
+				log.Debugf("world", "Generated chunk (%d, %d) for world '%s'\n", x, z, world.Name())
 			}
 		}
 	}
