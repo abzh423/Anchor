@@ -1,6 +1,6 @@
 package data
 
-import "github.com/golangminecraft/minecraft-server/src/api/protocol"
+import "github.com/anchormc/anchor/src/api/protocol"
 
 type StatusResponse struct {
 	Version     StatusResponseVersion `json:"version"`

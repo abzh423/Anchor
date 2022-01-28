@@ -4,8 +4,8 @@ import (
 	_ "embed"
 
 	"github.com/Tnze/go-mc/nbt"
-	"github.com/golangminecraft/minecraft-server/src/api"
-	proto "github.com/golangminecraft/minecraft-server/src/api/protocol"
+	"github.com/anchormc/anchor/src/api"
+	proto "github.com/anchormc/anchor/src/api/protocol"
 )
 
 //go:embed DimensionCodec.snbt

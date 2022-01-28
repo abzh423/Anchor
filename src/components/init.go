@@ -1,5 +1,5 @@
 package components
 
-import "github.com/golangminecraft/minecraft-server/src/api"
+import "github.com/anchormc/anchor/src/api"
 
 var Components = make([]api.Component, 0)

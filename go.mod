@@ -1,4 +1,4 @@
-module github.com/golangminecraft/minecraft-server
+module github.com/anchormc/anchor
 
 go 1.17
 

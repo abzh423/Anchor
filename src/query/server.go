@@ -8,9 +8,9 @@ import (
 	"net"
 	"strconv"
 
-	"github.com/golangminecraft/minecraft-server/src/api"
-	log "github.com/golangminecraft/minecraft-server/src/api/logger"
-	"github.com/golangminecraft/minecraft-server/src/util"
+	"github.com/anchormc/anchor/src/api"
+	log "github.com/anchormc/anchor/src/api/logger"
+	"github.com/anchormc/anchor/src/util"
 )
 
 type Server struct {

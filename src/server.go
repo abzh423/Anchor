@@ -13,16 +13,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golangminecraft/minecraft-server/src/api"
-	"github.com/golangminecraft/minecraft-server/src/api/data"
-	"github.com/golangminecraft/minecraft-server/src/api/enum"
-	log "github.com/golangminecraft/minecraft-server/src/api/logger"
-	proto "github.com/golangminecraft/minecraft-server/src/api/protocol"
-	"github.com/golangminecraft/minecraft-server/src/api/world"
-	"github.com/golangminecraft/minecraft-server/src/components"
-	"github.com/golangminecraft/minecraft-server/src/handlers"
-	"github.com/golangminecraft/minecraft-server/src/net"
-	"github.com/golangminecraft/minecraft-server/src/query"
+	"github.com/anchormc/anchor/src/api"
+	"github.com/anchormc/anchor/src/api/data"
+	"github.com/anchormc/anchor/src/api/enum"
+	log "github.com/anchormc/anchor/src/api/logger"
+	proto "github.com/anchormc/anchor/src/api/protocol"
+	worldAPI "github.com/anchormc/anchor/src/api/world"
+	"github.com/anchormc/anchor/src/components"
+	"github.com/anchormc/anchor/src/game"
+	"github.com/anchormc/anchor/src/game/generators"
+	"github.com/anchormc/anchor/src/handlers"
+	"github.com/anchormc/anchor/src/net"
+	"github.com/anchormc/anchor/src/query"
 )
 
 type Server struct {
@@ -34,7 +36,7 @@ type Server struct {
 	favicon      *image.Image
 	entityID     int64
 	queryServer  api.QueryServer
-	worldManager *world.WorldManager
+	worldManager worldAPI.WorldManager
 }
 
 func NewServer(cwd string) (api.Server, error) {
@@ -53,7 +55,7 @@ func NewServer(cwd string) (api.Server, error) {
 		favicon:      nil,
 		entityID:     0,
 		queryServer:  query.NewServer(),
-		worldManager: world.NewWorldManager(cwd),
+		worldManager: game.NewWorldManager(cwd),
 	}, nil
 }
 
@@ -106,8 +108,27 @@ func (s *Server) Initialize() error {
 	}
 
 	if _, ok := s.worldManager.GetWorld("overworld"); !ok {
-		if _, err := s.worldManager.CreateWorld("overworld"); err != nil {
+		world, err := s.worldManager.CreateWorld("overworld", generators.FlatGenerator{})
+
+		if err != nil {
 			return err
+		}
+
+		if err = world.Initialize(); err != nil {
+			return err
+		}
+
+		var x int64
+		var z int64
+
+		for x = 0; x <= 3; x++ {
+			for z = 0; z <= 3; z++ {
+				if err = world.GenerateChunk(x, z); err != nil {
+					return err
+				}
+
+				log.Debugf("world", "Generated chunk (%d, %d)\n", x, z)
+			}
 		}
 	}
 
@@ -335,7 +356,7 @@ func (s Server) DefaultGamemode() enum.Gamemode {
 	}
 }
 
-func (s *Server) DefaultWorld() *world.World {
+func (s *Server) DefaultWorld() worldAPI.World {
 	world, ok := s.worldManager.GetWorld("overworld") // TODO allow specifying default world and better world initializing
 
 	if !ok || world == nil {
@@ -389,7 +410,7 @@ func (s Server) Port() uint16 {
 	return s.config.Port
 }
 
-func (s *Server) WorldManager() *world.WorldManager {
+func (s *Server) WorldManager() worldAPI.WorldManager {
 	return s.worldManager
 }
 

@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"errors"
 
-	"github.com/golangminecraft/minecraft-server/src/api"
-	"github.com/golangminecraft/minecraft-server/src/api/data"
-	proto "github.com/golangminecraft/minecraft-server/src/api/protocol"
-	"github.com/golangminecraft/minecraft-server/src/api/world/chunk"
+	"github.com/anchormc/anchor/src/api"
+	"github.com/anchormc/anchor/src/api/data"
+	proto "github.com/anchormc/anchor/src/api/protocol"
+	"github.com/anchormc/anchor/src/api/world"
 )
 
 func init() {
@@ -44,8 +44,8 @@ func (k PositionHandler) Execute(server api.Server, client api.Client, packet pr
 
 	return nil // TODO fix chunk sending
 
-	chunkX := int64(x / proto.Double(chunk.ChunkSize))
-	chunkZ := int64(x / proto.Double(chunk.ChunkSize))
+	chunkX := int64(x / proto.Double(world.ChunkSize))
+	chunkZ := int64(x / proto.Double(world.ChunkSize))
 
 	if player.HasSentChunk(chunkX, chunkZ) {
 		return nil
@@ -59,7 +59,7 @@ func (k PositionHandler) Execute(server api.Server, client api.Client, packet pr
 
 	sectionData := &bytes.Buffer{}
 
-	for _, section := range chunk.Sections {
+	for _, section := range chunk.GetAllSections() {
 		data, err := section.RawSectionData()
 
 		if err != nil {

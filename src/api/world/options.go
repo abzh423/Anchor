@@ -1,9 +1,7 @@
 package world
 
-import "github.com/golangminecraft/minecraft-server/src/api/world/generator"
-
 type NewWorldOptions struct {
 	Folder       string
-	Generator    generator.WorldGenerator
+	Generator    WorldGenerator
 	StoreOptions map[string]interface{}
 }

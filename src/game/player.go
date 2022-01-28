@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/golangminecraft/minecraft-server/src/api"
-	"github.com/golangminecraft/minecraft-server/src/api/enum"
-	proto "github.com/golangminecraft/minecraft-server/src/api/protocol"
+	"github.com/anchormc/anchor/src/api"
+	"github.com/anchormc/anchor/src/api/enum"
+	proto "github.com/anchormc/anchor/src/api/protocol"
 )
 
 type Player struct {

@@ -4,10 +4,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/golangminecraft/minecraft-server/src/api/data"
-	"github.com/golangminecraft/minecraft-server/src/api/enum"
-	proto "github.com/golangminecraft/minecraft-server/src/api/protocol"
-	"github.com/golangminecraft/minecraft-server/src/api/world"
+	"github.com/anchormc/anchor/src/api/data"
+	"github.com/anchormc/anchor/src/api/enum"
+	proto "github.com/anchormc/anchor/src/api/protocol"
+	"github.com/anchormc/anchor/src/api/world"
 )
 
 type Server interface {
@@ -30,7 +30,7 @@ type Server interface {
 	Difficulty() enum.Difficulty
 	Hardcore() bool
 	DefaultGamemode() enum.Gamemode
-	DefaultWorld() *world.World
+	DefaultWorld() world.World
 	ViewDistance() int
 	SimulationDistance() int
 	KeepAliveInterval() time.Duration
@@ -38,5 +38,5 @@ type Server interface {
 	Clients() []Client
 	Host() string
 	Port() uint16
-	WorldManager() *world.WorldManager
+	WorldManager() world.WorldManager
 }

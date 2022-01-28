@@ -1,6 +1,6 @@
 package api
 
-import proto "github.com/golangminecraft/minecraft-server/src/api/protocol"
+import proto "github.com/anchormc/anchor/src/api/protocol"
 
 type Handler interface {
 	PacketID() proto.VarInt

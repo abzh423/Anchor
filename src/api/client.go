@@ -6,7 +6,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/golangminecraft/minecraft-server/src/api/protocol"
+	"github.com/anchormc/anchor/src/api/protocol"
 )
 
 type Client interface {

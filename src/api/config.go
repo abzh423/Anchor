@@ -38,7 +38,7 @@ func NewConfiguration() (*Configuration, error) {
 		Host:                 "0.0.0.0",
 		Port:                 25565,
 		OnlineMode:           true,
-		MOTD:                 "AnvilMC Server",
+		MOTD:                 "AnchorMC Server",
 		MaxPlayers:           20,
 		Difficulty:           "normal",
 		CompressionThreshold: -1,

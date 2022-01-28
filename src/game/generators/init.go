@@ -1,5 +1,5 @@
 package generators
 
-import "github.com/golangminecraft/minecraft-server/src/api/world/generator"
+import "github.com/anchormc/anchor/src/api/world"
 
-var GeneratorsMap map[string]generator.WorldGenerator = make(map[string]generator.WorldGenerator)
+var GeneratorsMap map[string]world.WorldGenerator = make(map[string]world.WorldGenerator)

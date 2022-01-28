@@ -10,12 +10,12 @@ import (
 	"net"
 	"time"
 
-	"github.com/golangminecraft/minecraft-server/src/api"
-	"github.com/golangminecraft/minecraft-server/src/api/enum"
-	log "github.com/golangminecraft/minecraft-server/src/api/logger"
-	proto "github.com/golangminecraft/minecraft-server/src/api/protocol"
-	"github.com/golangminecraft/minecraft-server/src/components"
-	"github.com/golangminecraft/minecraft-server/src/handlers"
+	"github.com/anchormc/anchor/src/api"
+	"github.com/anchormc/anchor/src/api/enum"
+	log "github.com/anchormc/anchor/src/api/logger"
+	proto "github.com/anchormc/anchor/src/api/protocol"
+	"github.com/anchormc/anchor/src/components"
+	"github.com/anchormc/anchor/src/handlers"
 	"github.com/google/uuid"
 )
 

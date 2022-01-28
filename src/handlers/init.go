@@ -1,5 +1,5 @@
 package handlers
 
-import "github.com/golangminecraft/minecraft-server/src/api"
+import "github.com/anchormc/anchor/src/api"
 
 var Handlers = make([]api.Handler, 0)

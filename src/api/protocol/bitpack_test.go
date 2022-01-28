@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/golangminecraft/minecraft-server/src/api/protocol"
+	"github.com/anchormc/anchor/src/api/protocol"
 )
 
 func TestPackInt64Array(t *testing.T) {

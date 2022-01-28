@@ -3,9 +3,9 @@ package components
 import (
 	"time"
 
-	"github.com/golangminecraft/minecraft-server/src/api"
-	log "github.com/golangminecraft/minecraft-server/src/api/logger"
-	proto "github.com/golangminecraft/minecraft-server/src/api/protocol"
+	"github.com/anchormc/anchor/src/api"
+	log "github.com/anchormc/anchor/src/api/logger"
+	proto "github.com/anchormc/anchor/src/api/protocol"
 )
 
 func init() {

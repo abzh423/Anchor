@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/golangminecraft/minecraft-server/src/api"
-	"github.com/golangminecraft/minecraft-server/src/api/data"
-	proto "github.com/golangminecraft/minecraft-server/src/api/protocol"
+	"github.com/anchormc/anchor/src/api"
+	"github.com/anchormc/anchor/src/api/data"
+	proto "github.com/anchormc/anchor/src/api/protocol"
 )
 
 func Status(server api.Server, client api.Client) error {

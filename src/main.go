@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	log "github.com/golangminecraft/minecraft-server/src/api/logger"
+	log "github.com/anchormc/anchor/src/api/logger"
 )
 
 var (

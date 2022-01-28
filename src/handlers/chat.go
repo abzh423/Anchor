@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/golangminecraft/minecraft-server/src/api"
-	proto "github.com/golangminecraft/minecraft-server/src/api/protocol"
+	"github.com/anchormc/anchor/src/api"
+	proto "github.com/anchormc/anchor/src/api/protocol"
 )
 
 func init() {

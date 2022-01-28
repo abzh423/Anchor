@@ -1,33 +1,44 @@
-package chunk
+package world
 
 import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"io"
+	"log"
 	"math"
 	"reflect"
 
-	proto "github.com/golangminecraft/minecraft-server/src/api/protocol"
-	"github.com/golangminecraft/minecraft-server/src/util"
+	proto "github.com/anchormc/anchor/src/api/protocol"
+	"github.com/anchormc/anchor/src/api/world"
+	"github.com/anchormc/anchor/src/util"
 )
 
 type ChunkSection struct {
-	Data    []uint32      `nbt:"data"`
-	Palette []PaletteItem `nbt:"palette"`
+	Index           int64                  `nbt:"Index"`
+	Y               int64                  `nbt:"Y"`
+	Data            []int32                `nbt:"Data"`
+	Palette         []world.Block          `nbt:"Palette"`
+	blockUpdateChan chan world.BlockUpdate `nbt:"-"`
 }
 
-func NewChunkSection() *ChunkSection {
+func NewChunkSection(index int64) world.ChunkSection {
 	return &ChunkSection{
-		Data: make([]uint32, 16*16*16),
-		Palette: []PaletteItem{
+		Index: index,
+		Y:     index * world.SectionHeight,
+		Data:  make([]int32, 16*16*16),
+		Palette: []world.Block{
 			{
 				ID:         0,
 				Name:       "minecraft:air",
 				Properties: make(map[string]interface{}),
 			},
 		},
+		blockUpdateChan: make(chan world.BlockUpdate),
 	}
+}
+
+func (c ChunkSection) OnBlockUpdate() world.BlockUpdate {
+	return <-c.blockUpdateChan
 }
 
 func (c ChunkSection) BlockCount() (count int16) {
@@ -42,7 +53,7 @@ func (c ChunkSection) BlockCount() (count int16) {
 	return
 }
 
-func (c ChunkSection) GetBlock(x, y, z int64) *PaletteItem {
+func (c ChunkSection) GetBlock(x, y, z int64) *world.Block {
 	index := x + z*16 + y*16*16
 
 	paletteIndex := c.Data[index]
@@ -50,72 +61,40 @@ func (c ChunkSection) GetBlock(x, y, z int64) *PaletteItem {
 	return &c.Palette[paletteIndex]
 }
 
-func (c *ChunkSection) SetBlock(x, y, z int64, item PaletteItem) {
+func (c *ChunkSection) SetBlock(x, y, z int64, item world.Block) {
 	index := x + z*16 + y*16*16
 
-	var paletteIndex uint32
-	var paletteFound bool = false
+	var paletteIndex int32 = -1
 
 	for k, v := range c.Palette {
 		if v.Name != item.Name || !reflect.DeepEqual(v.Properties, item.Properties) {
 			continue
 		}
 
-		paletteIndex = uint32(k)
-		paletteFound = true
+		log.Println("Found duplicate palette value", len(c.Palette))
+
+		paletteIndex = int32(k)
 
 		break
 	}
 
-	if paletteFound {
+	// oldValue := c.Palette[c.Data[index]]
+
+	if paletteIndex >= 0 {
 		c.Data[index] = paletteIndex
 	} else {
-		c.Data[index] = uint32(len(c.Palette))
+		c.Data[index] = int32(len(c.Palette))
 
 		c.Palette = append(c.Palette, item)
 	}
-}
 
-func (s ChunkSection) Encode(w io.Writer) error {
-	if err := binary.Write(w, binary.BigEndian, s.Data); err != nil {
-		return err
-	}
-
-	if err := binary.Write(w, binary.BigEndian, uint32(len(s.Palette))); err != nil {
-		return err
-	}
-
-	for _, item := range s.Palette {
-		if err := item.Encode(w); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (s *ChunkSection) Decode(r io.Reader) error {
-	if err := binary.Read(r, binary.BigEndian, s.Data); err != nil {
-		return err
-	}
-
-	var paletteLength uint32
-
-	if err := binary.Read(r, binary.BigEndian, &paletteLength); err != nil {
-		return err
-	}
-
-	var i uint32
-
-	s.Palette = make([]PaletteItem, paletteLength)
-
-	for i = 0; i < paletteLength; i++ {
-		if err := s.Palette[i].Decode(r); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	/* c.blockUpdateChan <- world.BlockUpdate{
+		X:        x,
+		Y:        y,
+		Z:        z,
+		OldValue: oldValue,
+		NewValue: c.Palette[c.Data[index]],
+	} */
 }
 
 func (s ChunkSection) RawSectionData() ([]byte, error) {
@@ -201,3 +180,5 @@ func (s ChunkSection) RawSectionData() ([]byte, error) {
 
 	return buf.Bytes(), nil
 }
+
+var _ world.ChunkSection = &ChunkSection{}

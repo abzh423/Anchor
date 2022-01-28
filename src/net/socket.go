@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/golangminecraft/minecraft-server/src/api"
+	"github.com/anchormc/anchor/src/api"
 )
 
 type Socket struct {

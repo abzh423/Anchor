@@ -9,12 +9,12 @@ import (
 	"fmt"
 
 	"github.com/Tnze/go-mc/net/CFB8"
-	"github.com/golangminecraft/minecraft-server/src/api"
-	log "github.com/golangminecraft/minecraft-server/src/api/logger"
-	proto "github.com/golangminecraft/minecraft-server/src/api/protocol"
-	"github.com/golangminecraft/minecraft-server/src/game"
-	"github.com/golangminecraft/minecraft-server/src/util"
-	"github.com/golangminecraft/minecraft-server/src/util/rest"
+	"github.com/anchormc/anchor/src/api"
+	log "github.com/anchormc/anchor/src/api/logger"
+	proto "github.com/anchormc/anchor/src/api/protocol"
+	"github.com/anchormc/anchor/src/game"
+	"github.com/anchormc/anchor/src/util"
+	"github.com/anchormc/anchor/src/util/rest"
 )
 
 func Login(server api.Server, client api.Client) error {

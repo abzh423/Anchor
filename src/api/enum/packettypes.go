@@ -1,6 +1,6 @@
 package enum
 
-import "github.com/golangminecraft/minecraft-server/src/api/protocol"
+import "github.com/anchormc/anchor/src/api/protocol"
 
 var (
 	PacketTypeHandshake protocol.VarInt = 0x00
