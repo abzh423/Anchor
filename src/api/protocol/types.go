@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io"
 	"math"
+	"reflect"
 	"regexp"
 
 	"github.com/Tnze/go-mc/nbt"
@@ -83,6 +84,7 @@ type (
 	Angle     byte
 	UUID      string
 	ByteArray []byte
+	Array     []DataType
 	NBT       struct {
 		Value   interface{}
 		RootTag string
@@ -537,6 +539,51 @@ func (v *ByteArray) Decode(r io.Reader) (int64, error) {
 	*v = ByteArray(data)
 
 	return n + int64(n2), err
+}
+
+func (v Array) Encode(w io.Writer) (int64, error) {
+	n, err := WriteVarInt(int32(len(v)), w)
+
+	if err != nil {
+		return n, err
+	}
+
+	for _, value := range v {
+		n2, err := value.Encode(w)
+
+		if err != nil {
+			return n, err
+		}
+
+		n += n2
+	}
+
+	return n, nil
+}
+
+func (v *Array) Decode(r io.Reader) (int64, error) {
+	length, n, err := ReadVarInt(r)
+
+	if err != nil {
+		return n, err
+	}
+
+	s := reflect.TypeOf(*v).Elem()
+	slice := reflect.MakeSlice(s, int(length), int(length))
+
+	for k, value := range *v {
+		n2, err := value.Decode(r)
+
+		if err != nil {
+			return n, err
+		}
+
+		n += n2
+
+		slice.Index(k).Set(reflect.ValueOf(value))
+	}
+
+	return n, nil
 }
 
 func (v NBT) Encode(w io.Writer) (int64, error) {
