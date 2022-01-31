@@ -59,7 +59,7 @@ func (k ChatHandler) Execute(server api.Server, client api.Client, packet proto.
 	packetData, err := proto.Marshal(
 		proto.VarInt(0x0F),
 		proto.Chat{
-			Text: fmt.Sprintf("%s: %s", player.Username(), message),
+			Text: fmt.Sprintf("<%s> %s", player.Username(), message),
 		},
 		proto.Byte(0),
 		client.GetPlayer().UUID(),
