@@ -1,5 +1,9 @@
 github.com/Tnze/go-mc v1.17.1 h1:Dt5xBw3fPQTMIgH4831njCqF35YJ5k3tfw1H5p379UA=
 github.com/Tnze/go-mc v1.17.1/go.mod h1:t0AI38F1BEmmy8/uLhr9RCOUeDbBj3oUNQH9akjzMc0=
+github.com/Tnze/go-mc v1.17.2-0.20220122135609-fee2e0c939a3 h1:S0xt+Tzo6uNJytcooZvBgBP9qy/EHlJiOdwI6Dag/+M=
+github.com/Tnze/go-mc v1.17.2-0.20220122135609-fee2e0c939a3/go.mod h1:t0AI38F1BEmmy8/uLhr9RCOUeDbBj3oUNQH9akjzMc0=
+github.com/anchormc/protocol v0.0.0-20220216202557-470db15754bf h1:sPIs4kzYW/ZAgU0DX2RQqjtOVfdHfpB7t+wtrPM9gSQ=
+github.com/anchormc/protocol v0.0.0-20220216202557-470db15754bf/go.mod h1:tuWXAmaecCmQV9ejKTpIZAnoqEbzndgS6JU8GjkQAJ4=
 github.com/fatih/color v1.13.0 h1:8LOYc1KYPPmyKMuN8QV2DNRWNbLo6LZ0iLs8+mlH53w=
 github.com/fatih/color v1.13.0/go.mod h1:kLAiJbzzSOZDVNGyDpeOxJ47H46qBXwg5ILebYFFOfk=
 github.com/google/uuid v1.1.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=

@@ -2,27 +2,22 @@ package api
 
 import (
 	"crypto/cipher"
-	"io"
-	"net"
-	"time"
 
-	"github.com/anchormc/anchor/src/api/protocol"
+	"github.com/anchormc/anchor/src/api/game"
+	"github.com/anchormc/anchor/src/api/proto"
+	"github.com/anchormc/protocol"
 )
 
 type Client interface {
-	ID() string
-	GetPlayer() Player
-	SetPlayer(Player)
-	GetReader() io.Reader
-	GetWriter() io.Writer
-	ReadPacket() (*protocol.Packet, error)
-	WritePacket(protocol.Packet) error
-	HandleConnection(Server) error
-	RemoteAddr() net.Addr
-	SetCipher(encode, decode cipher.Stream)
-	SetCompressionThreshold(int32)
-	StartKeepAlive(time.Duration)
-	OnReceiveKeepAlive(int64) error
-	Latency() int64
+	UUID() string
+	ReadPacket() (*proto.Packet, error)
+	WritePacket(*proto.Packet) error
+	UnmarshalPacket(protocol.VarInt, ...protocol.DataTypeReader) error
+	MarshalPacket(protocol.VarInt, ...protocol.DataTypeWriter) error
+	HandlePackets(Server)
+	RemoteAddr() string
+	GetPlayer() game.Player
+	SetPlayer(game.Player)
+	SetCipher(cipher.Stream, cipher.Stream)
 	Close() error
 }
