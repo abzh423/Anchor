@@ -3,12 +3,10 @@ package main
 import (
 	"os"
 	"os/signal"
-
-	"github.com/anchormc/anchor/src/impl"
 )
 
 func main() {
-	server := impl.NewServer()
+	server := NewServer()
 
 	if err := server.Initialize(); err != nil {
 		panic(err)

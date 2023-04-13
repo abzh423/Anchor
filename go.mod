@@ -3,18 +3,12 @@ module github.com/anchormc/anchor
 go 1.17
 
 require (
-	github.com/Tnze/go-mc v1.17.2-0.20220122135609-fee2e0c939a3
-	github.com/google/uuid v1.3.0
-	gopkg.in/yaml.v2 v2.4.0
+	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
+	github.com/fatih/color v1.15.0
 )
 
 require (
-	github.com/anchormc/protocol v0.0.0-20220216202557-470db15754bf
-	github.com/fatih/color v1.13.0
-)
-
-require (
-	github.com/mattn/go-colorable v0.1.9 // indirect
-	github.com/mattn/go-isatty v0.0.14 // indirect
-	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.17 // indirect
+	golang.org/x/sys v0.6.0 // indirect
 )

@@ -11,25 +11,27 @@
 
 This project was started to better understand the interaction between the server and the client, but has recently changed into a desire to create a working Minecraft server from scratch in Go. You can learn more about our development and interact with the community by joining our [Discord Server](https://discord.gg/8G5hDECBWk).
 
+**Please note** that this project recently underwent a complete rewrite to better work around the restrictive packaging structure that Go puts in place. All code is being converted into a single base Go package, except for a few utilities that are better fit into their own package.
+
 ## Features
 
-- [x] Server status (with favicon)
-- [x] Login
-- [x] Authentication
-- [x] Two-way encryption
-- [x] Query
-- [x] World generation (only flat available)
-- [x] Region store
-- [x] Player movement and rotation
-- [ ] Chunk updates (**extra help necessary**)
+- [ ] Server status (with favicon)
+- [ ] Login
+- [ ] Authentication
+- [ ] Two-way encryption
+- [ ] Query
+- [ ] World generation (only flat available)
+- [ ] Region store
+- [ ] Player movement and rotation
+- [ ] Chunk updates
 - [ ] Physics
 - [ ] Update blocks
 - [ ] Dropped entity interaction
 - [ ] NPCs (animals, mobs, etc.)
 - [ ] Plugins
-- [x] Console input
+- [ ] Console input
 - [ ] RCON
-- [x] Chat
+- [ ] Chat
 - [ ] Crafting
 - [ ] ... and so many utility APIs
 
@@ -40,18 +42,18 @@ There will be no distributable binaries until there is a working release with mo
 ```
 git clone https://github.com/AnchorMC/Anchor.git
 cd Anchor
-./scripts/build # or .\scripts\build.bat for Windows
+make
 ```
 
 The executable will now be located in the `bin` folder for you to run. It is recommended that you create a test folder and copy this executable to there so the server does not create a bunch of directories during startup within the source folder.
 
 ## Compatibility
 
-Please note that this is not meant to be a drop-in replacement for existing servers. All data storage formats have been modified from the standard Bukkit/Spigot format into a much more clean and simple format. Since the world storage has also been changed, attempting to read region data from a Notchian server will result in an error. There will eventually be a conversion tool available to convert (most) data from previous servers into our format, but since this server is still not entirely functional, that will be a release for a later time.
+Please note that this is not meant to be a drop-in replacement for existing servers. While the goal of this software is to match the format of standard Java Edition configuration and data storage formats, it may not be perfect and will be missing quite a few features. Over time, more features will be available and functional but the ETA is not known.
 
-## Credit
+## The Goal
 
-The goal was to create this Minecraft server implementation from scratch, but it became clear that this was not going to happen by myself. I would like to give a big thanks to Tnze, the creator of the [go-mc](https://github.com/Tnze/go-mc) package, for their work on the amazing utilities for interacting with the Minecraft protocol. I also couldn't have made this server implementation without the extensive documentation of the Minecraft protocol from the amazing contributors of [wiki.vg](https://wiki.vg).
+The goal of this project is to create a fully functional custom Minecraft server software that is highly efficient and outperforms existing Java-based server architecture. This is a slow and highly involved endeavour that will not be completed quickly. This project may forever be in a non-complete state, meaning that it will not perfectly match Java Edition servers, but we can always work towards providing maximum compatibility.
 
 ## Contributors
 
