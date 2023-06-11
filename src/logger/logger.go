@@ -20,9 +20,9 @@ var (
 	// LastLogTime is used to determine whether or not to create a new log file
 	// when processing the queue by comparing the current time to this value.
 	LastLogTime time.Time = time.Now()
-	// ActiveLogFile is the currently open log file which is only to be used
-	// during today. If attempting to log after a new day, a new file should be
-	// opened by the log management Goroutine.
+	// ActiveLogFile is the currently opened log file which is only used for
+	// a single day. When logging the next day, management Goroutine will 
+	// create a new file.
 	ActiveLogFile *os.File = nil
 	// Queue is the currently queue of log messages to be processed. This is
 	// used to prevent race condition while writing to the standard output, as
