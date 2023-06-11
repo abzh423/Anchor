@@ -17,7 +17,9 @@ func main() {
 	}
 
 	s := make(chan os.Signal, 1)
+	// Waiting for interrupt signal (Ctrl + C)
 	signal.Notify(s, os.Interrupt)
+	// Blocks execution until we receive the signal
 	<-s
 
 	if err := server.Close(); err != nil {
